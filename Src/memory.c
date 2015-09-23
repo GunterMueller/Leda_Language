@@ -2,8 +2,9 @@
   Leda memory management
 */
 
-# include <stdio.h>
-# include "memory.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include "memory.h"
 
 extern int displayOperators;    /* true if we are debugging */
 

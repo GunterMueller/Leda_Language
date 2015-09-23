@@ -3,10 +3,12 @@
   revised to use new garbage collection algorithm
 */
 
-# include "lc.h"
-# include "interp.h"
-# include <stdio.h>
-# include "memory.h"
+#include "lc.h"
+#include "interp.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "memory.h"
 
 /*
   globals used within the interpreter

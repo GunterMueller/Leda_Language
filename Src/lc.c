@@ -17,7 +17,6 @@ struct typeRecord * relationType;
 struct typeRecord * undefinedType;
 struct typeRecord * ClassType;
 
-int debugging = 0;
 extern int linenumber;
 
 /*---------------------lists ------------------*/
