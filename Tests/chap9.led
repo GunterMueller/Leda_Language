@@ -1,0 +1,147 @@
+{
+	expression trees 
+
+	tim budd
+}
+
+include "std.led";
+
+class Node;
+
+	function asString()->string;
+	begin		{ convert expression to string }
+		return "";
+	end;
+end;
+
+class Variable of Node;
+var
+	name : string;
+
+	function asString()->string;
+	begin
+		return name;
+	end;
+end;
+
+class Constant of Node;
+var
+	value : integer;
+
+	function asString()->string;
+	begin
+		return value.asString();
+	end;
+end;
+
+class Binary of Node;
+var
+	left : Node;
+	right : Node;
+
+	function operatorString()->string;
+	begin
+		return " ";
+	end;
+
+	function asString()->string;
+	begin
+		return "(" + left.asString() + operatorString() +
+			right.asString() + ")";
+	end;
+end;
+
+class Addition of Binary;
+	
+	function operatorString()->string;
+	begin
+		return "+";
+	end;
+end;
+
+class Subtraction of Binary;
+	
+	function operatorString()->string;
+	begin
+		return "-";
+	end;
+end;
+
+class Multiplication of Binary;
+	
+	function operatorString()->string;
+	begin
+		return "*";
+	end;
+end;
+
+function plus (left, right : Node)->Node;
+var
+	lval, rval : integer;
+	lleft, lright : Node;
+begin
+	if right is Constant(rval) then
+		if rval = 0 then		{ optimize t + 0 }
+			return left
+					{ optimize c + c }
+		else if left is Constant(lval) then
+			return Constant(lval + rval)
+					{ optimize (t + c) + c }
+		else if left is Addition(lleft, lright) &
+				lright is Constant(lval) then
+			return lleft + Constant(lval + rval);
+	if left is Constant then	{ optimize c + t }
+		return right + left;
+					{ optimize (t + c) + t }
+	if left is Addition(lleft, lright) & lright is Constant then
+		return (lleft + right) + lright;
+	if right is Addition(lleft, lright) & lright is Constant then
+		return (left + lleft) + lright;
+				{ no optimizations possible, generate node }
+	return Addition(left, right);
+end;
+
+function times (left, right : Node)->Node;
+var
+	rval, lval : integer;
+	lleft, lright : Node;
+begin
+	if right is Constant(rval) then
+		if rval = 0 then		{ optimize t * 0 }
+			return right
+		else if rval = 1 then	{ optimize t * 1 }
+			return left
+		else if left is Addition(lleft, lright) &
+				lright is Constant then
+					{ optimize (t + c) * c }
+			return (lleft * right) + (lright * right)
+		else if left is Constant(lval) then
+					{ optimize c * c }
+			return Constant(lval * rval);
+	if left is Constant then
+					{ optimize c * t }
+			return right * left;
+				{ otherwise, no optimizations possible }
+	return Multiplication(left, right);
+end;
+
+function minus (left, right : Node)->Node;
+var
+	val : integer;
+begin
+			{ optimize t - c into t + c }
+	if right is Constant(val) then
+		return left + Constant(-val);
+			{ otherwise simply return a new subtraction node }
+	return Subtraction(left, right);
+end;
+
+var 
+	x : Node;
+begin
+	x := (Variable("a") + 
+		(Variable("i") - Constant(2)) * Constant(40)) 
+			+ (Constant(4) - Constant(3)) * Constant(8);
+	print(x);
+	print("\n");
+end;

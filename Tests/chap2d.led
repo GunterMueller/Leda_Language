@@ -1,0 +1,45 @@
+{
+	functional programming version of sort procedure
+	from chapter 2
+	written by tim budd
+}
+
+include "std.led";
+include "intList.led";
+
+function insertion(x : integer, aList : intList)->intList;
+begin
+	if empty(aList) then
+		return intList(x, NIL)
+	else
+		if x < head(aList) then
+			return intList(x, aList)
+		else
+			return intList(head(aList), insertion(x, tail(aList)));
+end;
+
+function reduce(aList : intList, ident : intList,
+	binFun: function(integer, intList)->intList )->intList;
+begin
+	if empty(aList) then
+		return ident
+	else
+		return binFun(head(aList), reduce(tail(aList), ident, binFun));
+end;
+
+function sort(aList:intList)->intList;
+begin
+	return reduce(aList, NIL, insertion);
+end;
+
+var
+	in, out : intList;
+begin
+
+	in := intList(2, intList(5, intList(1, 
+		intList(4, intList(7, NIL)))));
+
+	out := sort(in);
+	print("sorted output\n");
+	listPrint(out);
+end;

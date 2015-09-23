@@ -1,0 +1,72 @@
+{
+	prime sieve program from chapter 4
+	written by Tim Budd, November 1993
+}
+
+include "std.led";
+include "flist.led";
+
+function NtoM(n, m : integer)->List[integer];
+begin
+		{ if no elements, yield empty list }
+	if (n > m) then
+		return emptyList;
+
+		{ place N on front to list from N+1 to M }
+	return List[integer](n, NtoM(n+1, m));
+end;
+
+function sieve(numbers : List[integer])->List[integer];
+var
+	newPrime : integer;
+begin
+		{ base case -- empty list of numbers }
+	if empty[integer] (numbers) then
+		return emptyList;
+
+	newPrime := head[integer](numbers);
+
+	return add[integer](newPrime,
+		sieve(removeTest[integer](numbers,
+			function (x : integer)->boolean;
+			begin
+				return 0 = x % newPrime;
+			end)));
+end;
+
+const
+	N := 100;
+var
+	numbers, primes : List[integer];
+	i, newPrime : integer;
+
+	function multiple(x : integer)->boolean;
+	begin
+		{ return true if no remainder after dividing x by newPrime}
+		return 0 = x % newPrime;
+	end;
+
+begin
+		{ step 1, build the initial list of numbers }
+	numbers := emptyList;
+	for i := 2 to N do
+		numbers := add[integer]((2+N)-i, numbers);
+
+		{ step 2, build the list of primes }
+	primes := emptyList;
+	while ~ empty[integer](numbers) do begin
+
+			{ add new prime to list }
+		newPrime := head[integer](numbers);
+		primes := addToEnd[integer](newPrime, primes);
+	
+			{ remove multiples }
+		numbers := removeTest[integer](numbers, multiple);
+	end;
+
+		{ step 3, print the list of primes }
+	listPrint[integer](primes);
+
+		{ version two, using purely functional forms }
+	listPrint[integer] (sieve(NtoM(2, N)));
+end;

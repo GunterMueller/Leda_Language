@@ -1,0 +1,77 @@
+{
+	test ``different from'' relation
+}
+
+include "std.led";
+
+
+const 
+	colors := ["red", "blue", "green", "yellow"];
+
+function differ (byRef a, b : string)->relation;
+begin
+	if defined(a) then
+		if defined(b) then
+			return a <> b
+		else 
+			return colors.items(b) & a <> b
+	else
+		if defined(b) then
+			return colors.items(a) & a <> b
+		else
+			return colors.items(a) & colors.items(b) & a <> b;
+end;
+
+var
+	estonia, latvia, lituania, belarus, russia, ukraine, moldova,
+	georgia, armenia, azerbijan, kazakhstan, turkmenstan,
+	uzbenkistan, kyrgyzstan, tajikistan : string;
+
+begin
+	{ print all all differences }
+	if 
+		differ(estonia, russia) &
+		differ(estonia, latvia) &
+		differ(latvia, russia) &
+		differ(latvia, lituania) &
+		differ(latvia, belarus) &
+		differ(lituania, belarus) &
+		differ(russia, belarus) &
+		differ(belarus, ukraine) &
+		differ(ukraine, russia) &
+		differ(ukraine, moldova) &
+		differ(russia, georgia) &
+		differ(georgia, armenia) &
+		differ(russia, azerbijan) &
+		differ(georgia, azerbijan) &
+		differ(armenia, azerbijan) &
+		differ(russia, kazakhstan) &
+		differ(kazakhstan, turkmenstan) &
+		differ(turkmenstan, uzbenkistan) &
+		differ(kazakhstan, uzbenkistan) &
+		differ(kazakhstan, kyrgyzstan) &
+		differ(kyrgyzstan, uzbenkistan) &
+		differ(uzbenkistan, tajikistan) &
+		differ(tajikistan, kyrgyzstan)
+
+	then begin
+		print("estonia is colored "); print(estonia); print("\n");
+		print("latvia is colored "); print(latvia); print("\n");
+		print("lituania is colored "); print(lituania); print("\n");
+		print("belarus is colored "); print(belarus); print("\n");
+		print("russia is colored "); print(russia); print("\n");
+		print("ukraine is colored "); print(ukraine); print("\n");
+		print("moldova is colored "); print(moldova); print("\n");
+		print("georgia is colored "); print(georgia); print("\n");
+		print("armenia is colored "); print(armenia); print("\n");
+		print("azerbijan is colored "); print(azerbijan); print("\n");
+		print("kazakhstan is colored "); print(kazakhstan); print("\n");
+		print("turkmenstan is colored "); print(turkmenstan); print("\n");
+		print("uzbenkistan is colored "); print(uzbenkistan); print("\n");
+		print("kyrgyzstan is colored "); print(kyrgyzstan); print("\n");
+		print("tajikistan is colored "); print(tajikistan); print("\n");
+		end
+	else
+		print("map cannot be colored");
+end;
+

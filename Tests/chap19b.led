@@ -1,0 +1,62 @@
+include "std.led";
+include "child.led";
+
+var x, y, z : string;
+begin
+	{print("verify that orestes and hermione are cousines\n");
+	if cousin("orestes", "hermione") then
+		print("true\n")
+	else
+		print("false\n");}
+
+	{print("second cousins of iphigenia\n");
+	y := NIL;
+	for NthCousin("alice", y, 2, 0) do begin
+		print("alice and ");
+		print(y);
+		print(" are second cousins\n");
+		end;}
+
+	{print("cousins removed test\n");
+	y := NIL;
+	for NthCousin("iphigenia", y, 1, 1) do begin
+		print("iphigenia and ");
+		print(y);
+		print(" are first cousins once removed\n");
+		end;}
+
+	{x := NIL;
+	for NthCousin(x, "alice", 1, 1) do begin
+		print(x);
+		print(" and alice ");
+		print(" are First cousins once removed\n");
+		end;}
+
+	print("list all females\n");
+	x := NIL;
+	for female(x) do begin
+		print(x); print("\n");
+		end;
+
+	print("list all males\n");
+	x := NIL;
+	for male(x) do begin
+		print(x); print("\n");
+		end;
+
+	if female("clytemnestra") then 
+		print("clytemnestra is a female\n")
+	else
+		print("clytemnestra is not a female\n");
+
+	if male("clytemnestra") then 
+		print("clytemnestra is a male\n")
+	else
+		print("clytemnestra is not a male\n");
+
+	if ~ female("clytemnestra") then 
+		print("clytemnestra is a ~ female\n")
+	else
+		print("clytemnestra is not a ~ female\n");
+
+end;

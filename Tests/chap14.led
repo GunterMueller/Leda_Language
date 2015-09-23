@@ -1,0 +1,271 @@
+{
+	Examples from chapter on applicative programming
+}
+
+include "std.led";
+
+include "flist.led";
+
+function reduce [X : equality, Y : object] (aList : List[X], ident : Y,
+	binFun: function(X, Y)->Y )->Y;
+begin
+	if empty[X](aList) then
+		return ident
+	else
+		return binFun(head[X](aList), 
+			reduce[X, Y](tail[X](aList), ident, binFun));
+end;
+
+function isum (theList : List[integer])->integer;
+begin
+		{ return sum of a List of integer values }
+	return reduce[integer, integer] (theList, 0, integer.plus);
+end;
+
+function rsum (theList : List[real])->real;
+begin
+		{ return sum of a List of integer values }
+	return reduce[real, real] (theList, 0.0, real.plus);
+end;
+
+function length [X : equality] (theList : List[X])->integer;
+begin
+	return reduce[X, integer](theList, 0,
+		function (ele : X, soFar : integer)->integer;
+		begin
+			return soFar + 1;
+		end);
+end;
+
+function average (theList : List[real])->real;
+begin
+	return rsum(theList) / length[real](theList);
+end;
+
+function copy [X : equality] (theList : List[X])->List[X];
+begin
+		{ return list with elements in reverse order }
+	return reduce[X, List[X]] (theList, NIL, add[X]);
+end;
+
+function reverse [X : equality] (theList : List[X])->List[X];
+begin
+		{ return list with elements in reverse order }
+	return reduce[X, List[X]] (theList, NIL, addToEnd[X]);
+end;
+
+function append [X : equality] (first, second : List[X])->List[X];
+begin
+	return reduce[X, List[X]]
+		(first, { iterate over second list }
+		second,	{ identity is first list }
+		add[X]); { function is add to end }
+end;
+
+function count [X : equality]
+	(theList : List[X], pred : function(X)->boolean)->integer;
+begin
+	return reduce[X, integer]
+		(theList,
+		0,
+		function (ele : X, soFar : integer)->integer;
+		begin
+			if pred(ele) then
+				return soFar + 1;
+			return soFar;
+		end);
+end;
+
+function oneToN(N : integer)->List[integer];
+begin
+		{ list up to zero is empty }
+	if N <= 0 then
+		return NIL
+		{ append N on to list up to N-1 }
+	else
+		return addToEnd[integer](N, oneToN(N-1));
+end;
+
+function isPrime(N : integer)->integer;
+begin
+	if 2 >= count[integer](oneToN(N),
+			{ predicate is true if x divides N evenly }
+		function (x : integer)->boolean;
+		begin
+			return 0 = N % x;
+		end)
+	then
+		return N
+	else
+		return 0;
+end;
+
+function someSelect [X : equality]
+	(theList : List[X], pred : function(X)->boolean)->boolean;
+begin
+		{ return true if some elements satisfy property }
+	return count[X](theList, pred) > 0;
+end;
+
+function allSelect [X : equality]
+	(theList : List[X], pred : function(X)->boolean)->boolean;
+begin
+		{ return true if all element satisfy property }
+	return count[X](theList, pred) = length[X](theList);
+end;
+
+function subset [X : equality] (first, second : List[X])->boolean;
+begin
+	return allSelect[X](first,
+		function (ele : X)->boolean;
+		begin
+			return includes[X](second, ele);
+		end);
+end;
+
+function findItem [X : equality]
+	(theList : List[X], pred : function(X)->boolean)->X;
+begin
+	return reduce[X, X] (theList, NIL,
+		function (item, soFar : X)->X;
+		begin
+			if pred(item) then
+				return item;
+			return soFar;
+		end);
+end;
+
+function median (theList : List[integer])->integer;
+begin
+		{ median -- the element for which an }
+		{ equal number of values are smaller and larger }
+	return findItem[integer](theList,
+		function (element : integer)->boolean;
+		begin
+			return 
+			count[integer](theList,function(x:integer)->boolean;
+					begin return element < x; end)
+			=
+			count[integer](theList,function(x:integer)->boolean;
+					begin return element > x; end);
+		end);
+end;
+
+function median2 (theList : List[integer])->integer;
+begin
+		{ median -- the element for which an }
+		{ equal number of values are smaller and larger }
+	return findItem[integer](theList,
+		function (element : integer)->boolean;
+		begin
+			return count[integer](theList, element.less)
+			= count[integer](theList, element.greater);
+		end);
+end;
+
+function map [X, Y : equality] 
+	(data : List[X], transform : function(X)->Y)->List[Y];
+begin
+	if empty[X](data) then
+		return emptyList
+	else
+		return List[Y](transform(head[X](data)), 
+			map[X, Y](tail[X](data), transform));
+end;
+
+function isPrime2(N : integer)->integer;
+begin
+	if 2 >= count[integer](
+			map[integer, integer](oneToN(N), N.remainder),
+			0.equals)
+	then
+		return N
+	else
+		return 0;
+end;
+
+function variance(theList : List[real])->real;
+const
+	ave := average(theList);
+	differences := map[real, real](theList,
+			function(a : real)->real; begin return a - ave; end);
+	squares := map[real, real](differences,
+			function(x : real)->real; begin return x * x; end);
+begin
+	return rsum(squares) / length[real](theList);
+end;
+
+function primesTo(N : integer)->List[integer];
+begin
+		{ map primes to themselves, non-primes to zero }
+	return map[integer,integer]
+		(oneToN(N), isPrime2);
+end;
+
+function filter [X : equality] 
+	(aList : List[X], pred : function(X)->boolean)->List[X];
+begin
+	if empty[X](aList) then
+		return aList;
+	if pred(head[X](aList)) then
+		return List[X](head[X](aList), filter[X](tail[X](aList), pred))
+	else
+		return filter[X](tail[X](aList), pred);
+end;
+
+var 
+	aList : List[integer];
+	bList : List[integer];
+	rList : List[real];
+begin
+	aList := add[integer](4, NIL);
+	aList := add[integer](3, aList);
+	aList := add[integer](2, aList);
+	aList := add[integer](1, aList);
+
+	print("original list is ");
+	listPrint[integer](aList);
+	print("sum is " + isum(aList) + "\n");
+	print("length is " + length[integer](aList) + "\n");
+	print("copy is ");
+	listPrint[integer](copy[integer](aList));
+	print("reverse is ");
+	listPrint[integer](reverse[integer](aList));
+
+	bList := add[integer](7, NIL);
+	bList := add[integer](6, bList);
+	bList := add[integer](5, bList);
+	print("b list is ");
+	listPrint[integer](bList);
+
+	print("append is ");
+	listPrint[integer](append[integer](aList, bList));
+
+	print("median of appended list");
+	print(median(append[integer](aList, bList)));
+	print("\n");
+
+	print("median2 of appended list");
+	print(median2(append[integer](aList, bList)));
+	print("\n");
+
+	print("one to 7 is ");
+	listPrint[integer](oneToN(7));
+
+	print("is 7 prime ?"); print(isPrime(7)); print("\n");
+	print("is 9 prime ?"); print(isPrime(9)); print("\n");
+
+	rList := add[real](4.3, NIL);
+	rList := add[real](3.1, rList);
+	rList := add[real](2.5, rList);
+	rList := add[real](1.7, rList);
+	print("real list "); listPrint[real](rList);
+	print("average is " + average(rList) + "\n");
+	print("variance is " + variance(rList) + "\n");
+
+	print("primes less than 25 ");
+	listPrint[integer](primesTo(25));
+
+	print("filter out values");
+	listPrint[integer](filter[integer](primesTo(25), 0.notEquals));
+end;

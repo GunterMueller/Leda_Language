@@ -1,0 +1,47 @@
+{
+	imparative version of sort procedure
+}
+
+include "std.led";
+include "intList.led";
+
+function sort(byRef aList : intList);
+var
+	current, p : intList;
+	x, temp : integer;
+begin
+	current := aList;
+	while defined(current) do begin
+
+		{ place current element into proper location }
+
+		x := current.value;
+		p := aList;
+
+		while p ~= current do begin
+			if x < p.value then begin
+				temp := p.value;
+				p.value := x;
+				x := temp;
+			end;
+			p := p.next;
+		end;
+
+		{ advance to next position }
+		current.value := x;
+		current := current.next;
+	end;
+end;
+
+var
+	aList : intList;
+begin
+	aList := intList(2, intList(5, intList(1, 
+		intList(4, intList(7, NIL)))));
+	listPrint(aList);
+	print(" about to sort ");
+	sort(aList);
+	print(" ok ");
+	listPrint(aList);
+end;
+

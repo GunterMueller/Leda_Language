@@ -1,0 +1,123 @@
+include "std.led";
+include "olist.led";
+
+function brokerLocation(locations : integer)->boolean;
+begin
+		{ test bit 4 }
+	return 0 <> (locations & 8);
+end;
+
+function husbandLocation(locations : integer)->boolean;
+begin
+		{ test bit 3 }
+	return 0 <> (locations & 4);
+end;
+
+function girlFriendLocation(locations : integer)->boolean;
+begin
+		{ test bit 2 }
+	return 0 <> (locations & 2);
+end;
+
+function lettersLocation(locations : integer)->boolean;
+begin
+		{ test bit 1 }
+	return 0 <> (locations & 1);
+end;
+
+function safe(locations : integer)->boolean;
+begin
+	{ return true if location is safe }
+
+	{ unsafe if husband is not with broker and with letters }
+	if (brokerLocation(locations) <> husbandLocation(locations))
+		& (husbandLocation(locations) = lettersLocation(locations))
+			then return false;
+
+	{ unsafe is husband is not with wife and with girlfriend }
+	if (brokerLocation(locations) <> husbandLocation(locations))
+		& (husbandLocation(locations) = girlFriendLocation(locations))
+			then return false;
+
+	{ otherwise assumed to be safe }
+	return true;
+end;
+
+function move(oldLocation, movers : integer)->integer;
+begin
+		{ make exclusive or of two values }
+	return (oldLocation | movers) & ~ (oldLocation & movers);
+end;
+
+function printLocations(locations : integer);
+begin
+	if brokerLocation(locations) then
+		print("broker east ")
+	else
+		print("broker west ");
+	if husbandLocation(locations) then
+		print("husband east ")
+	else
+		print("husband west ");
+	if girlFriendLocation(locations) then
+		print("girlFriend east ")
+	else
+		print("girlFriend west ");
+	if lettersLocation(locations) then
+		print("letters east ")
+	else
+		print("letters west ");
+	print("\n");
+end;
+
+var
+	locations : List[integer];
+	visited : List[integer];
+
+var
+	currentLocation, passenger, i, movers, newLocation : integer;
+
+	function findSafeMove(currentLocation : integer)->integer;
+	begin
+		passenger := 1;
+		for i := 1 to 4 do begin
+			movers := passenger | 8;
+			newLocation := move(currentLocation, movers);
+			if safe(newLocation) 
+				& ~ visited.includes(newLocation) then
+					return newLocation;
+			passenger := passenger * 2;
+		end;
+		return NIL;
+	end;
+begin
+	print("try search first without backtracking\n");
+		{ start with everybody on one side }
+	currentLocation := 0;
+	visited := List[integer]();
+
+	while defined(currentLocation) do begin
+		visited.add(currentLocation);
+		printLocations(currentLocation);
+		currentLocation := findSafeMove(currentLocation);
+	end;
+
+	print("now try search with backtracking\n");
+
+		{ start with everybody on one side }
+	locations := List[integer]() + 0;
+	visited := List[integer]();
+
+	while locations.first(currentLocation) do begin
+		printLocations(currentLocation);
+		visited.add(currentLocation);
+		passenger := 1;
+		for i := 1 to 4 do begin
+			movers := passenger | 8;
+			newLocation := move(currentLocation, movers);
+			if safe(newLocation) & ~ visited.includes(newLocation) then
+				locations.addToEnd(newLocation);
+			passenger := passenger * 2;
+		end;
+	end;
+end;

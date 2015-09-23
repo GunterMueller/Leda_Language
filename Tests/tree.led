@@ -1,0 +1,165 @@
+{
+	object oriented version of tree data structure
+	written by tim budd
+}
+
+{
+	class Node 
+		-- a single node in a tree
+}
+
+class Node [T : ordered] of equality[Node];
+var
+	value : T;
+	leftChild : Node[T];
+	rightChild : Node[T];
+
+	function insert(newElement : T);
+	begin
+		if newElement < value then
+			if defined(leftChild) then
+				leftChild.insert(newElement)
+			else
+				leftChild := Node[T](newElement, NIL, NIL)
+		else
+			if defined(rightChild) then
+				rightChild.insert(newElement)
+			else
+				rightChild := Node[T](newElement, NIL, NIL);
+	end;
+
+	function travelLeft(newLeft : Node[T])->Node[T];
+	begin
+		if defined(leftChild) then
+			return Node[T](value,
+				leftChild.travelLeft(newLeft), 
+				rightChild)
+		else	{ found end of left children, add new new node}
+			return Node[T](value, newLeft, rightChild);
+	end;
+
+	function remove(element : T)->Node[T];
+	begin
+		if element = value then begin
+			if ~ defined(leftChild) then
+				return rightChild
+			else if ~ defined(rightChild) then
+				return leftChild
+			else if ~ defined(rightChild.leftChild) then
+				return Node[T](rightChild.value,
+					leftChild, rightChild.rightChild)
+			else
+				return rightChild.travelLeft(leftChild);
+			end
+		else if element < value then
+			return Node[T](value, 
+				leftChild.remove(element), rightChild)
+		else
+			return Node[T](value,
+				leftChild, rightChild.remove(element));
+	end;
+
+	function onEach(theFun : function(T));
+	begin
+			{ first process the left subtree }
+		if defined(leftChild) then
+			leftChild.onEach(theFun);
+			{ then process the value }
+		theFun(value);
+			{ then process the right subtree }
+		if defined(rightChild) then
+			rightChild.onEach(theFun);
+	end;
+
+	function items(byRef element : T)->relation;
+	begin
+		return 
+			defined(leftChild) & leftChild.items(element)
+			| unify[T](element, value)
+			| defined(rightChild) & rightChild.items(element);
+	end;
+
+	function equals (aNode : Node[T])->boolean;
+	begin
+		return
+			value = aNode.value
+			& (defined(leftChild) & 
+				defined(aNode.leftChild) &
+				leftChild = aNode.leftChild
+			| ~ defined(leftChild) & ~ defined(aNode.leftChild))
+			& (defined(rightChild) & 
+				defined(aNode.rightChild) &
+				rightChild = aNode.rightChild
+			| ~ defined(leftChild) & ~ defined(aNode.leftChild));
+	end;
+end;
+
+class  Tree [T : ordered] of equality[Tree];
+var
+	root : Node[T];
+
+	function add (newElement : T);
+	begin
+		if ~ defined(root) then
+			root := Node[T](newElement, NIL, NIL)
+		else
+			root.insert(newElement);
+	end;
+
+	function includes (element : T)->boolean;
+	var
+		current : Node[T];
+	begin
+		{ walk down tree, testing each element on path}
+		current := root;
+		while defined(current) do
+			if element = current.value then
+				return true
+			else if element < current.value then
+				current := current.leftChild
+			else
+				current := current.rightChild;
+			{ not found, therefore not in collection }
+		return false;
+	end;
+
+	function items (byRef element : T)->relation;
+	begin
+		return defined(root) & root.items(element);
+	end;
+
+	function remove (element : T);
+	begin
+		if defined(root) then
+			root := root.remove(element);
+	end;
+
+	function onEach (theFun : function(T));
+	begin
+		if defined(root) then
+			root.onEach(theFun);
+	end;
+
+	function equals (aTree : Tree[T])->boolean;
+	begin
+		return defined(root) & defined(aTree.root) &
+				root = aTree.root
+			| ~ defined(root) & ~ defined(aTree.root);
+	end;
+end;
+
+
+{
+	class OrderedSet -
+		subclassing for construction from class Tree
+}
+
+class OrderedSet [T : ordered] of Tree[T];
+
+	function add (newElement : T);
+	begin
+		if ~ includes(newElement) then
+			Tree[T].add(self, newElement);
+	end;
+end;
+

@@ -1,0 +1,53 @@
+{
+	event-driven simulations
+}
+
+class Event of ordered[Event];
+var
+	eventTime : integer;
+
+	function time()->integer;
+	begin
+		return eventTime;
+	end;
+
+	function happen();
+	begin
+		{ default -- nothing happens }
+	end;
+
+	function less(arg : Event)->boolean;
+	begin
+		return eventTime < arg.time();
+	end;
+end;
+
+class Simulation;
+var
+	currentTime : integer;
+	eventQueue : Tree[Event];
+
+	function initialize();
+	begin
+		eventQueue := Tree[Event]();
+		currentTime := 0;
+	end;
+
+	function addEvent (newEvent : Event);
+	begin
+		eventQueue.add(newEvent);
+	end;
+
+	function run ();
+	var
+		currentEvent : Event;
+	begin
+		while eventQueue.items(currentEvent)
+			do begin
+				eventQueue.remove(currentEvent);
+				currentTime := currentEvent.time();
+				currentEvent.happen();
+				currentEvent := NIL;
+			end;
+	end;
+end;

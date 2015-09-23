@@ -1,0 +1,332 @@
+{
+	simple graph data type
+	from chapter 3
+}
+
+include "std.led";
+
+class Set[X : equality];
+var
+	value : X;
+	next : Set[X];
+
+	function includes(val : X)->boolean;
+	begin
+		if value = val then
+			return true;
+		if defined(next) then
+			return next.includes(val);
+		return false;
+	end;
+
+	function remove(val : X)->Set[X];
+	begin
+		if val = value then
+			return next;
+		if defined(next) then
+			return Set[X](value, next.remove(val))
+		else
+			return self;
+	end;
+
+	function items(byRef val : X)->relation;
+	begin
+		return unify[X] (val, value)
+			| defined(next) & next.items(val);
+	end;
+end;
+
+function addSet [X : equality] (aSet : Set[X], newVal : X)->Set[X];
+begin
+	if defined(aSet) & aSet.includes(newVal) then
+		return aSet;
+	return Set[X](newVal, aSet);
+end;
+
+class Edge of equality[Edge];
+var
+	tail : integer;
+	head : integer;
+
+	function equals (arg : Edge)->boolean;
+	begin
+		return tail = arg.tail & head = arg.head;
+	end;
+end;
+
+class Graph;
+var
+	vertexSet : Set[integer];
+	edgeSet : Set[Edge];
+
+	function addVertex(newVertex : integer)->Graph;
+	begin
+		return Graph(addSet[integer](vertexSet, newVertex), edgeSet);
+	end;
+
+	function includesVertex(val : integer)->boolean;
+	begin
+		return defined(vertexSet) & vertexSet.includes(val);
+	end;
+
+	function includesEdge(anEdge : Edge)->boolean;
+	begin
+		return defined(edgeSet) & edgeSet.includes(anEdge);
+	end;
+
+	function addEdge(newEdge : Edge)->Graph;
+	begin
+		if includesVertex(newEdge.tail) & includesVertex(newEdge.head)
+		then
+			return Graph(vertexSet, addSet[Edge](edgeSet, newEdge))
+		else
+			return self;
+	end;
+
+	function removeVertex(val : integer)->Graph;
+	var
+		newGraph : Graph;
+		anEdge : Edge;
+	begin
+			{ make a new graph with no edges and vertex removed} 
+		newGraph := Graph(vertexSet.remove(val), NIL);
+
+			{ add edges, only those with new vertices will be added}
+		if defined(edgeSet) then
+			for edgeSet.items(anEdge) do
+				newGraph := newGraph.addEdge(anEdge);
+		return newGraph;
+	end;
+
+	function removeEdge(anEdge : Edge)->Graph;
+	begin
+		if defined(edgeSet) then
+			return Graph(vertexSet, edgeSet.remove(anEdge))
+		else
+			return self;
+	end;
+
+	function vertex(byRef val : integer)->relation;
+	begin
+		return defined(vertexSet) & vertexSet.items(val);
+	end;
+
+	function edge(byRef tail : integer, byRef head : integer)->relation;
+	var
+		anEdge : Edge;
+	begin
+		return
+			defined(edgeSet) &
+			edgeSet.items(anEdge) 
+				& unify[integer](tail, anEdge.tail)
+				& unify[integer](head, anEdge.head);
+	end;
+
+	function inDegree(aVertex : integer)->integer;
+	var
+		head, tail : integer;
+		count : integer;
+	begin
+		count := 0;
+		head := aVertex;
+
+		tail := NIL;
+		for edge(tail, head) do 
+			count := count + 1;
+
+		return count;
+	end;
+
+	function outDegree(aVertex : integer)->integer;
+	var
+		tail, head : integer;
+		count : integer;
+	begin
+		count := 0;
+		tail := aVertex;
+
+		head := NIL;
+		for edge(tail, head) do
+			count := count + 1;
+
+		return count;
+	end;
+
+	function degree(aVertex : integer)->integer;
+	begin
+		return inDegree(aVertex) + outDegree(aVertex);
+	end;
+
+	function path(byRef i : integer, byRef j : integer)->relation;
+	var
+		k : integer;
+	begin
+		return vertex(i) & vertex(j) &
+			(((i = j)
+			| edge(i, j)
+			| (edge(i, k) & removeVertex(i).path(k, j))));
+	end;
+
+	function display();
+	var 
+		i : integer;
+		j : integer;
+	begin
+		print("vertices");
+		for vertex(i) do
+			print(i);
+		print("\nedges \n");
+		for edge(i, j) do begin
+			print(i);
+			print("-");
+			print(j);
+			end;
+		print("--\n");
+	end;
+
+end;
+
+function cycle(aGraph : Graph, byRef v : integer)->relation;
+var
+	w : integer;
+begin
+		{ cycle if edge from v to w, and }
+		{ path back from w to v }
+	return aGraph.edge(v, w) & aGraph.path(w, v);
+end;
+
+function isDag(aGraph : Graph)->boolean;
+var
+	v : integer;
+	r : boolean;
+begin
+		{ a graph is a dag if there are no cycles }
+	return ~ cycle(aGraph, v);
+end;
+
+function spanningTree(aGraph : Graph, byRef st : Graph);
+var
+	v, i, j : integer;
+	flag : boolean;
+begin
+	st := Graph();
+
+		{ find an initial vertex }
+	if aGraph.vertex(v) then 
+		st := st.addVertex(v);
+
+		{ loop as long as we can find new }
+		{ vertices to add to the spanning tree }
+	flag := true;
+	while flag do begin
+		flag := false;
+		for aGraph.edge(i, j) do
+			if st.includesVertex(i) 
+					& ~ st.includesVertex(j) then
+				begin
+					st := st.addVertex(j);
+					st := st.addEdge(Edge(i, j));
+					flag := true;
+				end
+			else if st.includesVertex(j) & 
+					~ st.includesVertex(i) then
+				begin
+					st := st.addVertex(i);
+					st := st.addEdge(Edge(i, j));
+					flag := true;
+				end;
+		end;
+end;
+
+include "intList.led";
+
+function hamiltonPath(g : Graph, 
+	byRef start : integer, byRef path : intList)->relation;
+var
+	tail : integer;
+	newGraph : Graph;
+begin
+	return 
+		g.vertex(start) & newGraph <- g.removeVertex(start) &
+			(( ~ defined(newGraph.vertexSet) 
+				& path <- intList(start, NIL))
+			| (g.edge(start, tail) & 
+				hamiltonPath(newGraph, tail, path) & 
+				path <- intList(start, path)));
+end;
+
+var 
+	aGraph : Graph;
+	bGraph : Graph;
+	i : integer;
+	j : integer;
+	aList : intList;
+begin
+	aGraph := Graph();
+	for i := 1 to 7 do
+		aGraph := aGraph.addVertex(i);
+	aGraph := aGraph.addEdge(Edge(1, 2));
+	aGraph := aGraph.addEdge(Edge(2, 3));
+	aGraph := aGraph.addEdge(Edge(3, 4));
+	aGraph := aGraph.addEdge(Edge(4, 5));
+	aGraph := aGraph.addEdge(Edge(3, 5));
+	aGraph := aGraph.addEdge(Edge(5, 6));
+	aGraph := aGraph.addEdge(Edge(6, 4)); 
+	aGraph := aGraph.addEdge(Edge(4, 7));
+
+	print("original graph\n");
+	aGraph.display();
+
+	print("testing degrees\n");
+	print(aGraph.inDegree(4));
+	print(aGraph.outDegree(4));
+	print(aGraph.degree(4));
+
+	print("listing all paths\n");
+	i := NIL;
+	j := NIL;
+		{ comment out -- runs out of memory on some machines }
+	for aGraph.path(i, j) do begin
+		print(i);
+		print("-");
+		print(j);
+		print("\n");
+		end;
+
+	print("vertices that can be reached from 3\n");
+	i := NIL;
+	j := 3;
+	for aGraph.path(j, i) do
+		print(i);
+	print("\nvertices that can reach 5\n");
+	i := NIL;
+	j := 5;
+	for aGraph.path(i, j) do
+		print(i);
+	print("\n");
+
+	print("cycle testing\n");
+	i := NIL;
+	for cycle(aGraph, i) do 
+		print(i);
+	print("\n");
+
+	if isDag(aGraph) then
+		print("graph is a DAG\n")
+	else
+		print("graph is not a DAG\n");
+
+	print("spanning tree\n");
+	spanningTree(aGraph, bGraph);
+	bGraph.display();
+
+	print("hamilton path testing\n");
+	i := NIL;
+	if hamiltonPath(aGraph, i, aList) then begin
+		print("there is a hamilton path\n");
+		listPrint(aList);
+		print("\n");
+		end
+	else
+		print("no hamilton path\n");
+end;

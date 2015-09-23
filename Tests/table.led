@@ -1,0 +1,88 @@
+{
+	table data structure, as described in 
+	``multiparadigm data structures in Leda''
+	written by Tim Budd
+	January 1993
+
+	assumes the list data structure is already defined
+}
+
+class Association [X, Y : equality] of equality[Association];
+var
+	key : X;
+	value : Y;
+
+	function equals(argValue : Association[X, Y])->boolean;
+	begin
+		return key = argValue.key;
+	end;
+end;
+
+class Table [X, Y : equality] of equality[Association];
+var
+	data : List[Association[X, Y]];
+
+	function add (newKey : X, newValue : Y);
+	begin
+		if ~ defined(data) then
+			data := List[Association[X, Y]]();
+		data.add(Association[X, Y](newKey, newValue));
+	end;
+
+	function onEach (theFun : function(X, Y));
+	begin
+		if defined(data) then
+			data.onEach(function (item : Association[X, Y]);
+				begin
+					theFun(item.key, item.value);
+				end);
+	end;
+
+	function items (byRef key : X, byRef value : Y)->relation;
+	var
+		element : Association[X, Y];
+	begin
+		return defined(data) 
+			& data.items(element)
+			& unify[X](key, element.key)
+			& unify[Y](value, element.value);
+	end;
+
+	function includesKey (key : X)->boolean;
+	var
+		value : Y;
+	begin
+		if items(key, value) then
+			return true;
+		return false;
+	end;
+
+	function at (key : X)->Y;
+	var
+		value : Y;
+	begin
+		if items(key, value) then
+			return value;
+		return NIL;
+	end;
+
+	function atPut (key : X, value : Y);
+	var
+		element : Association[X, Y];
+	begin
+		if defined(data) & data.items(element) & element.key = key then
+			element.value := value
+		else
+			add(key, value);
+	end;
+
+
+	function removeKey (key : X);
+	begin
+			{ remove the element that matches key }
+		data.removeTest(function (element : Association[X, Y])->boolean;
+			begin
+				return element.key = key;
+			end);
+	end;
+end;

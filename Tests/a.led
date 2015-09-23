@@ -1,0 +1,7 @@
+include "std.led";
+var
+	i : integer;
+begin
+	i := 3;
+end;
+

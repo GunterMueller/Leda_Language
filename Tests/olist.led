@@ -1,0 +1,177 @@
+{
+	list data abstraction written in an object-oriented fashion
+
+	written by tim budd
+}
+
+class Link [X : equality];
+var
+	datum : X;
+	next : Link[X];
+
+	function addToEnd (newValue : X);
+	begin
+		if defined(next) then
+			next.addToEnd(newValue)
+		else
+			next := Link[X](newValue, NIL);
+	end;
+
+	function includes(value : X)->boolean;
+	begin
+		if value = datum then
+			return true;
+		if defined(next) then
+			return next.includes(value);
+		return false;
+	end;
+
+	function remove(value : X)->Link[X];
+	begin
+		if datum = value then
+			return next;
+		if defined(next) then
+			return Link[X](datum, next.remove(value));
+		return self;
+	end;
+
+	function removeTest (pred : function(X)->boolean)->Link[X];
+	var
+		remainder : Link[X];
+	begin
+		if defined(next) then
+			remainder := next.removeTest(pred);
+
+			{ test head value, see if it should be added to list }
+		if pred(datum) then
+			return remainder;
+		return Link[X](datum, remainder);
+	end;
+
+	function items(byRef val : X)->relation;
+	begin
+		return val <- datum
+			| defined(next) & next.items(val);
+	end;
+
+end;
+
+class List [X : equality];
+var
+	data : Link[X];
+
+	function add(newValue: X);
+	begin
+			{ just add to front of list }
+		data := Link [X] (newValue, data);
+	end;
+
+	function addToEnd (newValue : X);
+	begin
+		if defined (data) then
+			data.addToEnd (newValue)
+		else		{ no other values, add to front }
+			add (newValue);
+	end;
+
+	function plus(newValue : X)->List[X];
+	begin
+		addToEnd(newValue);
+		return self;
+	end;
+
+	function empty ()->boolean;
+	begin
+			{ there there is data we are not empty }
+		return ~ defined(data);
+	end;
+
+	function head()->X;
+	begin
+		return data.datum;
+	end;
+
+	function tail ()->List[X];
+	begin
+			{ return a new list with first element gone }
+		return List[X](data.next);
+	end;
+
+	function first (byRef value : X)->boolean;
+	begin
+			{ if no values, return false }
+		if empty() then 
+			return false;
+
+			{ return value held in first link }
+		value := data.datum;
+
+			{ remove first link and return true }
+		data := data.next;
+		return true;
+	end;
+
+	function includes(value : X)->boolean;
+	begin
+		if defined(data) then
+			return data.includes(value);
+		return false;
+	end;
+
+	function remove(value :X);
+	begin
+		if defined(data) then
+			data := data.remove(value);
+	end;
+
+	function removeTest (pred : function(X)->boolean);
+	begin
+		if defined(data) then
+			data := data.removeTest(pred);
+	end;
+
+	function onEach(fun : function(X));
+	var
+		p : Link[X];
+	begin
+		p := data;
+		while defined(p) do begin
+			fun(p.datum);
+			p := p.next;
+		end;
+	end;
+
+	function items(byRef val : X)->relation;
+	begin
+		return defined(data) & data.items(val);
+	end;
+
+	function listPrint();
+	var
+		val : X;
+	begin
+		for items(val) do begin
+			print(val);
+			print(" ");
+			end;
+		print("\n");
+	end;
+
+	function generator()->function()->X;
+	var
+		current : Link[X];
+	begin
+		current := data;
+		return function()->X;
+			var
+				val : X;
+			begin
+				if defined(current) then begin
+					val := current.datum;
+					current := current.next;
+				end;
+				return val;
+			end;
+	end;
+end;
+

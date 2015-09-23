@@ -1,0 +1,41 @@
+{
+	simple integer list,
+	for examples in chapter 2
+}
+
+class intList;
+var
+	value : integer;
+	next : intList;
+end;
+
+function head(lst : intList)->integer;
+begin
+	return lst.value;
+end;
+
+function tail(lst : intList)->intList;
+begin
+	return lst.next;
+end;
+
+function empty(lst : intList)->boolean;
+begin
+		{ the undefined value NIL}
+		{ is used for the empty list }
+	return ~ defined(lst);
+end;
+
+function listPrint(x : intList);
+var
+	p : intList;
+begin
+	p := x;
+	while defined(p) do begin
+		print(head(p));
+		print(" ");
+		p := p.next;
+	end;
+end;
+	
+

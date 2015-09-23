@@ -1,0 +1,112 @@
+{
+	object oriented set constructed using composition
+
+	written by tim budd
+}
+
+include "std.led";
+include "olist.led";
+
+class Set [T : equality];
+var
+	values : List[T];
+
+	function add (newValue : T);
+	begin
+		if ~ defined(values) then
+			values := List[T]();
+		if ~ values.includes(newValue) then
+			values.add(newValue);
+	end;
+
+	function includes (value : T)->boolean;
+	begin
+		if defined(values) then
+			return values.includes(value);
+		return false;
+	end;
+
+	function remove (value : T);
+	begin
+		if defined(values) then
+			values.remove(value);
+	end;
+
+	function items(byRef val : T)->relation;
+	begin
+		return defined(values) & values.items(val);
+	end;
+
+	function unionWith(secondSet : Set[T]);
+	var
+		val : T;
+	begin		{ just all elements from second set }
+		for secondSet.items(val) do
+			add(val);
+	end;
+
+	function less(secondSet : Set[T])->boolean;
+	var
+		val : T;
+		result : boolean;
+	begin
+		result := true;
+		for items(val) do
+			if ~ secondSet.includes(val) then
+				result := false;
+		return result;
+	end;
+
+	function asString()->string;
+	var 
+		result : string;
+		val : T;
+	begin
+		result := "";
+		for items(val) do 
+			result := result + val + " ";
+		return result;
+	end;
+end;
+
+{
+	------------ test program follows ----------------
+}
+
+var
+	animals : array[string];
+	barkingAnimals : Set[string];
+	zooAnimals : Set[string];
+
+	name : string;
+
+begin
+	animals := ["cat", "dog", "seal", "lion", "horse"];
+	barkingAnimals := Set[string]();
+	zooAnimals := Set[string]();
+
+	barkingAnimals.add("dog");
+	barkingAnimals.add("seal");
+
+	zooAnimals.add("seal");
+	zooAnimals.add("lion");
+	zooAnimals.add("lion");
+
+	for animals.items(name) do begin
+		print("a ");
+		print(name);
+		if zooAnimals.includes(name) then
+			print(" is a zoo animal")
+		else
+			print(" is a non-zoo animal");
+		if barkingAnimals.includes(name) then
+			print(" that barks\n")
+		else
+			print(" that does not bark\n");
+	end;
+
+	barkingAnimals.unionWith(zooAnimals);
+	print("union of barking animals and zoo animals is: ");
+	print(barkingAnimals);
+	print("\n");
+end;

@@ -1,0 +1,109 @@
+{
+	simple lists written in a functional fashion
+	used in Chapter 4
+	written by Tim Budd, November 1993.
+}
+
+const
+	emptyList := NIL;
+
+class List [X : object];
+var
+	value : X;
+	next : List[X];
+end;
+
+function add [X : object] (newValue : X, aList : List[X])->List[X];
+begin
+		{ simply call constructor for new list }
+	return List[X] (newValue, aList);
+end;
+
+function head [X : object] (aList : List[X])->X;
+begin
+	return aList.value;
+end;
+
+function tail [X : object] (aList : List[X])->List[X];
+begin
+	return aList.next;
+end;
+
+function empty [X : object] (aList : List[X])->boolean;
+begin
+		{ if defined, then not empty }
+	return ~ defined(aList);
+end;
+
+function addToEnd [X : object] (newValue : X, aList : List[X])->List[X];
+begin
+	if empty[X] (aList) then
+		return List[X](newValue, emptyList)
+	else
+		return List[X](head[X](aList), 
+			addToEnd[X](newValue, tail[X](aList)));
+end;
+
+function includes [X : equality] (aList : List[X], value : X)->boolean;
+begin
+	while ~ empty[X] (aList) do begin
+			{ check current element }
+		if value = head[X] (aList) then
+			return true;
+		aList := tail[X] (aList);
+		end;
+		
+		{ not found, return false }
+	return false;
+end;
+
+function remove [X : equality] (aList : List[X], value : X)->List[X];
+begin
+		{ base case -- empty list }
+	if empty[X] (aList) then
+		return emptyList;
+
+		{ otherwise compare against first element }
+	if value = head[X] (aList) then
+		return tail[X] (aList);
+	return List[X] (head[X](aList), remove[X](tail[X](aList), value));
+end;
+
+function removeTest [X : object] 
+	(aList : List[X], pred : function(X)->boolean)->List[X];
+var
+	headVal : X;
+	remainder : List[X];
+begin
+	if empty[X] (aList) then
+		return emptyList;
+
+		{ compute head and new tail }
+	headVal := head[X](aList);
+	remainder := removeTest[X](tail[X](aList), pred);
+
+		{ test head value, see if it should be added to list }
+	if pred(headVal) then
+		return remainder;
+	return List[X](headVal, remainder);
+end;
+
+function listPrint [X : object] (aList : List[X]);
+begin
+		{ loop over the list, printing each element }
+	while ~ empty[X] (aList) do begin
+		print(head[X] (aList));
+		print(" ");
+		aList := tail[X] (aList);
+		end;
+
+		{ print newline at end }
+	print("\n");
+end;
+
+function listItems [X : equality] (aList : List[X], byRef ele : X)->relation;
+begin
+	return defined(aList) & ele <- aList.value
+		| defined(aList.next) & listItems[X](aList.next, ele);
+end;
+

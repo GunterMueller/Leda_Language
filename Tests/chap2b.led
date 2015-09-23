@@ -1,0 +1,46 @@
+{
+	logic programming version of sort procedure
+	from chapter 2
+	written by tim budd
+}
+
+include "std.led";
+include "intList.led";
+
+function insertion(startList : intList,
+	x : integer, byRef newList : intList)->relation;
+var
+	temp : intList;
+begin
+	return empty(startList) & newList <- intList(x, NIL)
+		| ~ empty(startList) & 
+			(x < head(startList) & newList <- intList(x, startList)
+			| x >= head(startList) & 
+				insertion(tail(startList), x, temp) &
+				newList <- intList(head(startList),temp));
+end;
+
+function sort(startList:intList, byRef endList:intList)->relation;
+var
+	temp : intList;
+begin
+	return empty(startList) & endList <- startList
+		| ~ empty(startList) & sort(tail(startList), temp) &
+			insertion(temp, head(startList), endList);
+end;
+
+var
+	in, out : intList;
+begin
+
+	in := intList(2, intList(5, intList(1, intList(4, intList(7, NIL)))));
+
+	if sort(in, out) then begin
+		print("sorted output\n");
+		listPrint(out);
+	end
+	else
+		print("unable to sort!");
+end;
+
+	

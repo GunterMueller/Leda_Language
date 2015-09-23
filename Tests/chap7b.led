@@ -1,0 +1,80 @@
+{
+	object oriented set constructed using inheritance
+
+	written by tim budd
+}
+
+include "std.led";
+include "olist.led";
+
+class Set [T : equality] of List[T];
+
+	function add (newValue : T);
+	begin		{ add only if not already in list }
+		if ~ includes(newValue) then
+			List[T].add(self, newValue);
+	end;
+
+	function unionWith(secondSet : Set[T]);
+	var
+		val : T;
+	begin		{ just all elements from second set }
+		for secondSet.items(val) do
+			add(val);
+	end;
+end;
+
+{
+	-------------- test program follows -----------------
+}
+
+type 
+	strSet : Set[string];
+
+function setPrint(s : strSet);
+var
+	x : string;
+begin
+	for s.items(x) do begin
+		print(x);
+		print(" ");
+	end;
+end;
+
+var
+	animals : array[string];
+	barkingAnimals : strSet;
+	zooAnimals : strSet;
+
+	name : string;
+
+begin
+	animals := ["cat", "dog", "seal", "lion", "horse"];
+	barkingAnimals := Set[string]();
+	zooAnimals := Set[string]();
+
+	barkingAnimals.add("dog");
+	barkingAnimals.add("seal");
+
+	zooAnimals.add("seal");
+	zooAnimals.add("lion");
+	zooAnimals.add("lion");
+
+	for animals.items(name) do begin
+		print("a ");
+		print(name);
+		if zooAnimals.includes(name) then
+			print(" is a zoo animal")
+		else
+			print(" is a non-zoo animal");
+		if barkingAnimals.includes(name) then
+			print(" that barks\n")
+		else
+			print(" that does not bark\n");
+	end;
+
+	barkingAnimals.unionWith(zooAnimals);
+	print("union of barking animals and zoo animals is: ");
+	setPrint(barkingAnimals);
+	print("\n");
+end;

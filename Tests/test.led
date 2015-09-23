@@ -1,0 +1,11 @@
+include "std.led";
+
+var
+	a : array[integer];
+
+begin
+	a := newArray[integer](2, 5);
+	a.atPut(3, 7);
+	print(a.at(3));
+end;
+

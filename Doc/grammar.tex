@@ -1,0 +1,525 @@
+\chapter{Leda Grammar}\label{gr0}
+
+In this chapter we describe the grammar of the language Leda as it
+is currently defined.
+Note that the language has evolved over time,
+and this grammar differs slightly from the language used in some of
+the earlier papers on Leda, especially~\cite{blend} and~\cite{ledadata}.
+
+The grammar will be defined using a combination of BNF and commentary.
+Keywords are given in {\bf bold}.  Non-keyword lexical items are
+written in {\em italic}.  Nonterminals symbols are written in Roman font.
+The symbol $\epsilon$ is used to represent ``nothing'', that is,
+an empty sequence of characters.
+
+\section{Overall Program Structure}\label{gr1}
+
+\begin{tabular}{l r l}
+program & ::= & declarations body {\bf ;} \\ \\
+
+declarations & ::= & $\epsilon$ \\
+& $\mid$ & declarations declaration \\ \\
+
+body & ::= & {\bf begin} statements {\bf end} \\ \\
+\end{tabular}
+
+The overall structure of a program is a sequence consisting of zero or more
+declarations, followed by a single compound statement.  The compound
+statement given in the body is the
+statement initially executed when the program is invoked.
+
+Definitions: declaration: Section~\ref{gr2}, statements: Section~\ref{gr6}.
+
+\section{Declarations}\label{gr2}
+
+\begin{tabular}{l r l}
+declaration & ::= & {\bf const} constantDefinitions \\
+& $\mid$ & {\bf var} variableDefinitions \\
+& $\mid$ & {\bf type} typeDefinitions \\
+& $\mid$ & functionDeclaration \\
+& $\mid$ & classDeclaration \\ \\
+constantDefinitions & ::= & constantDefinition \\
+& $\mid$ & constantDefinitions constantDefinition \\ \\
+constantDefinition & ::= & {\em identifier} {\bf :=} expression {\bf ;} \\ \\
+variableDefinitions & ::= & variableDefinition \\
+& $\mid$ & variableDefinitions variableDefinition \\ \\
+variableDefinition & ::= & identifierList {\bf :} type {\bf ;} \\ \\
+identifierList & ::= & {\em identifier} \\
+& $\mid$ & identifierList {\bf ,} {\em identifier} \\ \\
+typeDefinitions & ::= & typeDefinition \\
+& $\mid$ & typeDefinitions typeDefinition \\ \\
+typeDefinition & ::= & {\em identifier} {\bf :} type {\bf ;} \\ \\
+\end{tabular}
+
+Unlike Pascal, in Leda the different forms of declaration can be listed
+in any order, and the same type of declaration section may appear more
+than once in a given scope (although individual identifiers cannot
+be declared more than once, see below).
+
+The expression assigned to a constant identifier need not be resolvable
+at compile time. Such values will be calculated in the order they
+are given prior to the execution of any statement in the context
+in which they are defined.
+
+All declared identifiers (constant, type, variable, function and class names)
+must be unique within the scope in which they declared.
+
+Although type declarations are permitted in Leda they tend to be used
+far less frequently than in Pascal, since the vast majority of type
+declarations are replaced by classes.
+
+Identifiers declared within a function can only be accessed by statements
+defined in the function scope.
+
+Identifiers created within a class definition can be accessed outside
+the class scope only if qualified by an expression of the appropriate
+class type (see Section~\ref{gr8}).
+
+Definitions:
+type: Section~\ref{gr3},
+functionDeclaration: Section~\ref{gr4},
+classDeclaration: Section~\ref{gr5},
+expression: Section~\ref{gr7}.
+
+\section{Types}\label{gr3}
+
+\begin{tabular}{l r l}
+type & ::= & {\em identifier} \\
+& $\mid$ & {\em identifier} {\bf [} typeList {\bf ]} \\
+& $\mid$ & {\bf function} {\bf (} optionalArguments {\bf )} optionalReturnType \\ \\
+typeList & ::= & type \\
+& $\mid$ & typeList {\bf ,} type \\ \\
+optionalArguments & ::= & $\epsilon$ \\
+& $\mid$ & formalList \\ \\
+formalList & ::= & storageForm type \\
+& $\mid$ & formalList {\bf ,} storageForm type \\ \\
+storageForm & ::= & $\epsilon$ \\
+& $\mid$ & {\bf byRef} \\
+& $\mid$ & {\bf byName} \\ \\
+optionalReturnType & ::= & $\epsilon$ \\
+& $\mid$ & {\bf $-\!{}>$} type \\ \\
+\end{tabular}
+
+Types can be divided into class types (which are types generated
+automatically by a class definition), resolved types (produced
+by binding qualified type parameters on a generic function or class),
+or function types.
+
+A type-list used to qualify a generic function or class type
+must match in number and compatibility the type arguments given
+in the declaration of the underlying type.
+
+The data-type {\tt relation}, used in the back-tracking mechanism, is
+the only type predefined by the Leda system (as opposed to being defined in
+Leda itself in the standard library).  Although a relation can be
+thought of as a form of boolean, in fact a relation is more accurately
+described as equivalent to the following definition:
+\begin{cprog}
+
+type
+	relation : function (relation)->boolean;
+
+\end{cprog}
+That is, a relation is a function which takes as argument another relation
+and returns a boolean value.   Functions that manipulate relations
+are written in Leda and are defined as part of the standard library.
+A number of other types are also defined in the standard library.
+
+\section{Function Declarations}\label{gr4}
+
+\begin{tabular}{l r l}
+functionDeclaration & ::= & {\bf function} {\em identifier} typeArguments \\
+& & valueArguments optionalReturnType {\bf ;} \\
+& & declarations body {\bf ;} \\ \\
+typeArguments & ::= & $\epsilon$ \\
+& $\mid$ & {\bf [} argumentList {\bf ]} \\ \\
+valueArguments & ::= & {\bf (} $\;$ {\bf )} \\
+& $\mid$ & {\bf (} argumentList {\bf )} \\ \\
+argumentList & ::= & storageForm identifierList {\bf :} type \\
+& $\mid$ & argumentList {\bf ,} storageForm identifierList {\bf :} type \\ \\
+\end{tabular}
+
+A function declaration provides both the function signature (argument
+types and return type) and the function body.
+
+The keyword {\bf function} is used to define both functions that
+return values and functions that do not return any value (the latter
+are sometimes referred to as procedures).
+
+Functions can be made generic by defining type parameters.
+If type parameters are omitted then the square brackets are omitted
+as well.  However, the parenthesis that surround value parameters
+must be written, even if no such parameters are used.
+
+Identifiers declared within a function definition can be accessed only
+by statements that originate within the scope of the function.
+
+The meaning of operator symbols can be defined by providing
+a function which uses the textual-name for the operator symbol.
+See Section~\ref{gr12} for a list of the textual-names for operators.
+
+Function names cannot be overloaded, with the exception of
+functions that are defining the meaning of operator symbols, which can
+be overloaded only at the global scope.
+
+Definitions:
+declarations, body: Section~\ref{gr1},
+identifierList: Section~\ref{gr2},
+storageForm, type, optionalReturnType: Section~\ref{gr3}.
+
+\section{Class Declarations}\label{gr5}
+
+\begin{tabular}{l r l}
+classDeclaration & ::= & classHeading declarations {\bf end} {\bf ;} \\ \\
+classHeading & ::= & className {\bf ;} \\
+& $\mid$ & className {\bf of} {\em identifier} {\bf ;} \\
+& $\mid$ & className {\bf of} {\em identifier} {\bf [} typeList {\bf ]} {\bf ;} \\ \\
+className & ::= & {\bf class} {\em identifier} typeArguments \\ \\
+\end{tabular}
+
+Class definitions define a new identifier scope, in a similar manner to function
+definitions.  In addition, class declarations define the class name
+as a new type.
+
+The optional identifier following the keyword {\tt of} must denote
+a class name, which is the parent class from which the new class
+will inherit.
+If the parent class is generic (defined using type-parameters)
+then type-parameters must be provided in the bracket-surrounded type argument
+list in order to fully resolve the generic class parameters.
+Furthermore, such parameters must match in type and in number of
+type arguments given in the underlying class declaration.
+Such a type-list cannot be used on a non-generic
+class.  If no parent class is specified the class {\em object} is assumed.
+
+Definitions:
+typeList: Section~\ref{gr3},
+typeArguments: Section~\ref{gr4}.
+
+\section{Statements}\label{gr6}
+
+\begin{tabular}{l r l}
+statements & ::= & $\epsilon$ \\
+& $\mid$ & statements statement {\bf ;} \\ \\
+statement & ::= & reference {\bf :=} expression \\
+& $\mid$ & {\bf return} \\
+& $\mid$ & {\bf return} expression \\
+& $\mid$ & {\bf begin} statements {\bf end} \\
+& $\mid$ & {\bf if} expression {\bf then} statement \\
+& $\mid$ & {\bf if} expression {\bf then} statement {\bf else} statement \\
+& $\mid$ & {\bf while} expression {\bf do} statement \\
+& $\mid$ & {\bf for} expression {\bf do} statement \\
+& $\mid$ & {\bf for} expression {\bf to} expression {\bf do} statement \\
+& $\mid$ & {\bf for} reference {\bf :=} expression {\bf to} expression {\bf do} statement \\
+& $\mid$ & procedureCall \\
+& $\mid$ & $\epsilon$ \\ \\
+procedureCall & ::= & functionCall {\bf (} optionalExpressionList {\bf )} \\
+& $\mid$ & {\bf cfunction} {\em identifier} {\bf (} optionalExpressionList {\bf )} \\ \\
+optionalExpressionList & ::= & $\epsilon$ \\
+& $\mid$ & expressionList \\ \\
+expressionList & ::= & expression \\
+& $\mid$ & expressionList {\bf ,} expression \\ \\
+\end{tabular}
+
+The semicolon is used as a statement terminator, not a statement separator.
+
+In an assignment statement, the expression to the right of the assignment
+symbol must have a type that is legally assignment-compatible with
+the reference described to the left of the assignment symbol.
+Assignment is performed using {\em pointer semantics}.
+Following the assignment statement the value of the reference on the
+left of the assignment arrow is exactly the same as the value on the right
+of the assignment arrow.
+If the right side is a simple reference, then changes made to one variable
+will be reflected in changes made to the other, and vice-versa.
+This situation will remain until one or the other reference is subsequently
+reassigned, or until one or the other goes out of scope.
+
+A value is assignment-compatible with a variable if
+\begin{enumerate}
+\item
+The type of the value is the same as the type of the variable,
+\item
+The type of the value is an instance of a subclass for the class associated
+with the variable,
+\item
+The value is the polymorphic constant {\tt NIL},
+\item
+Both the variable and value are function types, and
+\begin{enumerate}
+\item
+The number of arguments and their storage form match
+\item
+The type associated with each by-value or by-name parameter in the value is
+type-assignment with the equivalent types in the target variable,
+\item
+The type associated with each by-reference parameter is the same in both
+cases (a test which can be implemented by determining that the values are
+type-assignable in both directions), and
+\item
+The type associated with the returned value is type-assignable to the type of
+the target.
+\end{enumerate}
+\end{enumerate}
+
+No automatic conversions are done by Leda,\footnote{There is one small
+exception to the rule that Leda performs no automatic conversions.
+Relational values will be automatically converted into a boolean value
+when they are used in the test expression in an {\tt if} or {\tt while}
+statement.} not even the conversion of integer to real.
+All such changes must be explicitly specified by the user.
+(Mixed mode arithmetic operations are implemented by defining
+several forms of the arithmetic operators at the global level).
+
+Parameters which are passed by-name cannot be used as the target of
+an assignment, nor can identifiers which are declared as referring to
+constant values.
+Parameters which are passed by-value are treated
+the same as local variables which have been initialized with the value
+of the actual argument.  Note that this is a form of assignment,
+and thus the comments relative to the semantics of assignment (above)
+are true for by-value parameters as well.  This is occasionally a source
+of confusion, when an operation that changes the state of a formal parameter
+value will be observed to have also changed the state of the actual
+parameter value used in a function call.
+
+Return statements are not permitted in the body defined at the global
+level.  A return statement with a value can only be used in an
+function which returns a value of a type to which the expression
+can be assigned.  Conversely, if a return statement is used within
+a function that does not produce a value, then no expression
+can be used with the return statement.
+
+Return statements are not permitted within the statement associated
+with the relational version of the {\tt for} statement.
+
+The expression used to control execution in an {\tt if} statement or
+a {\tt while} loop must be either boolean type, or relational type
+(which will be converted into boolean type).
+
+An {\tt else} clause is matched with the closest surrounding {\tt if} statement.
+
+The first expression used in the first and second form of the {\tt for}
+statement must be of type relation.  In the second form of the {\tt for}
+statement the second expression must be type boolean.
+In the form of the {\tt for} statement using assignment (the third
+form of {\tt for} statement), the reference and all expressions
+must be type integer.
+
+Parenthesis must be used in a procedure call, even if no actual
+arguments are being passed.
+
+The keyword {\bf cfunction} introduces a run-time system call; an invocation
+of an underlying operation that is normally not type-checked.
+It is the responsibility of the programmer to ensure that no
+type errors can be introduced through the use of this mechanism.
+Normally calls on {\bf cfunctions} are hidden within other
+functions.  Implementations may make further restrictions on
+the use of this mechanism.  (For example, in the Leda Interpreter there
+is a fixed set of cfunctions, which can only be modified by recompiling
+the interpreter).
+
+In a procedure call the actual arguments being passed must match in number and
+compatibility the arguments given in the declaration of the target function.
+
+Definitions:
+expression, functionCall : Section~\ref{gr7},
+reference: Section~\ref{gr8}.
+
+\section{Expressions}\label{gr7}
+
+\begin{tabular}{l r l}
+expression & ::= & andExpression \\
+& $\mid$ & expression {\em orSymbol} andExpression \\ \\
+andExpression & ::= & notExpression \\
+& $\mid$ & andExpression {\em andSymbol} notExpression \\ \\
+notExpression & ::= & relationalExpression \\
+& $\mid$ & \verb+~+ notExpression \\
+& $\mid$ & reference {\bf is} type \\
+& $\mid$ & reference {\bf is} type {\bf (} identifierList {\bf )} \\ \\
+relationalExpression & ::= & plusExpression \\
+& $\mid$ & plusExpression {\em relationalOperator} plusExpression \\ \\
+plusExpression & ::= & timesExpression \\
+& $\mid$ & plusExpression {\em plusOperator} timesExpression \\ \\
+timesExpression & ::= & functionCall \\
+& $\mid$ & timesExpression {\em timesOperator} functionCall \\
+& $\mid$ & {\em plusOperator} functionCall \\ \\
+functionCall & ::= & basicExpression \\
+& $\mid$ & functionCall {\bf (} optionalExpressionList {\bf )} \\
+& $\mid$ & {\bf cfunction} {\em identifier} {\bf (} optionalExpressionList {\bf )} $->$ type \\ \\
+\end{tabular}
+
+The {\em or} symbol is \verb+|+.
+The {\em and} symbol is \verb+&+.
+The six relational operators are $<$, $<=$, $=$, $<>$, $>=$ and $>$,
+The two plus operators are $+$ and $-$.
+The three times operators are $*$, $/$ and \verb+%+, the latter denoting
+remainder.
+The {\bf cfunction} keyword is described in Section~\ref{gr6}.
+
+The {\bf is} keyword introduces a type pattern matching operation.
+The expression returns a boolean true value if the expression to the
+left of the {\bf is} is an instance or subclass of the type represented
+by the identifier to the right of the keyword.  The identifiers in
+the optional list following the test must match the data fields
+defined for the type.  If the identifier list is present and the test
+is successful, the data fields are copied out of the value into the
+variables, in effect undoing the actions of the constructor for the class.
+
+In a function call the actual arguments being passed must match in number and
+compatibility the arguments given in the declaration of the target function.
+Arguments passed to by-reference parameters need not be references; if
+non-reference a temporary variable will be generated, the value of
+the parameter will be assigned to the temporary, and the reference passed
+to the function will be that of the temporary.
+
+Definitions:
+type: Section~\ref{gr3},
+optionalExpressionList: Section~\ref{gr6},
+basicExpression: Section~\ref{gr8}.
+
+\section{Basic Expression}\label{gr8}
+
+\begin{tabular}{l r l}
+basicExpression & ::= & reference \\
+& $\mid$ & {\em constant} \\
+& $\mid$ & {\bf (} expression {\bf )} \\
+& $\mid$ & basicExpression {\bf [} typeList {\bf ]} \\
+& $\mid$ & {\bf [} expressionList {\bf ]} \\
+& $\mid$ & {\bf function} valueArguments optionalReturnType {\bf ;} declarations body \\ \\
+reference & ::= & {\em identifier} \\
+& $\mid$ & functionCall {\bf .} {\em identifier} \\ \\
+\end{tabular}
+
+Constants can be either string constants, integer constants, or
+real (floating-point) constants (see Section~\ref{gr11}).
+
+A reference must denote a declared identifier (which can be either
+constant, variable, type or function).  In the first
+form the identifier must be accessible in the scope containing the reference,
+while in the second form the identifier must be accessible in the scope
+denoted by the function call, which must be a class type.
+
+A square bracket surrounding a type-list following a basic expression
+is used to describe the resolution of qualified types in a function expression.
+
+Square brackets surrounding an expression list is used to define
+an array literal.  All the expressions appearing in the list must have
+the same type.
+
+Definitions:
+declarations, body: Section~\ref{gr1},
+typeList: Section~\ref{gr3},
+valueArguments, optionalReturnType: Section~\ref{gr4},
+expression, expressionList, functionCall: Section~\ref{gr7}.
+
+\section{Comments and Whitespace}\label{gr9}
+
+Any text between matching curly braces is treated as a comment and
+will be ignored by the parser.  This is the only legal use for curly
+brace characters.
+
+Outside of literal strings, space, tab and newline characters have no
+meaning.
+
+\section{Identifiers and Keywords}\label{gr10}
+
+Identifiers must begin with a letter or underscore, and consist of
+an arbitrary number of letters, digits, or underscore characters.
+
+In addition to the textual names for operator symbols (see Section~\ref{gr12}),
+the following tokens are reserved as keywords, and cannot
+be used to define identifiers:
+
+\begin{center}
+\begin{tabular}{l l l l l}
+begin & byName & byRef & cfunction & class \\
+const & defined & do & else & end  \\
+for & function & if & include & of \\
+return & then & to & type & var \\
+while & is \\
+\end{tabular}
+\end{center}
+
+\section{Textual names for Operator Symbols}\label{gr12}
+
+The meaning of unary and binary operators in any given context is provided
+by the implementation of a function with the {\em textual name\/} for the
+operator symbol.  The following table gives the various operators
+and their associated textual name.
+
+\begin{center}
+\begin{tabular}{| l | l |}
+\multicolumn{2}{c}{\em binary operators} \\
+\hline
+symbol & name \\
+\hline
+\verb-+- & plus \\
+\verb+-+ & minus \\
+\verb+*+ & times \\
+\verb+/+ & divide \\
+\verb+%+ & remainder \\
+\verb+&+ & and \\
+\verb+|+ & or \\
+\verb+<+ & less \\
+\verb+<=+ & lessEqual \\
+\verb+>+ & greater \\
+\verb+>=+ & greaterEqual \\
+\verb+==+ & sameAs \\
+\verb+~=+ & notSameAs \\
+\verb+=+ & equals \\
+\verb+<>+ & notEquals \\
+\hline
+\end{tabular} \begin{tabular}{| l | l |}
+\multicolumn{2}{c}{\em unary operators} \\
+\hline
+symbol & name \\
+\hline
+\verb+~+ & not \\
+\verb+-+ & negation \\
+\hline
+\end{tabular}
+\end{center}
+
+Functions that define operator symbols are the only function names that
+can be overloaded (be associated with more than one function body defined
+in the same scope).  Such overloading can only take place at the
+global scope.
+
+\section{Constants}\label{gr11}
+
+There are three types of constants in Leda.  These are string constants,
+integer constants, and real (or floating-point) constants.
+
+String constants are surrounded by a matching pair of double-quote
+marks.  String constants cannot span multiple input lines, however
+the following escape conventions can be used to represent special
+characters:
+
+\begin{center}
+\begin{tabular}{| l | l |}
+\hline
+{\em sequence} & {\em meaning} \\
+\hline
+\verb+\n+ & {\em newline} \\
+\verb+\t+ & {\em tab} \\
+\verb+\b+ & {\em backspace} \\
+\verb+\\+ & {\em backslash} \\
+\verb+\"+ & {\em quote mark} \\
+\hline
+\end{tabular}
+\end{center}
+
+There is no separate type for character constants.
+Strings of length 1 can be used in place of character values.
+
+Integer constants consist of a sequence of digit characters.
+The underlying architecture may impose restrictions on the size
+of integer constants that can be recognized.
+
+A real (or floating-point) constant consists of a non-empty sequence
+of digit characters, followed by a fractional part and/or an
+exponent part.  A fractional part consists of a decimal point
+(period) followed by a non-empty sequence of digit characters.
+An exponent part consists of the literal character {\bf E} followed
+by an optional sign and a non-empty sequence of digit characters.

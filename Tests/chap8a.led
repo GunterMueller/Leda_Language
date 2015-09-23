@@ -1,0 +1,71 @@
+include "std.led";
+include "olist.led";
+include "tree.led";
+include "dictionary.led";
+
+function treeSort [X : ordered] (aList : List[X])->List[X];
+var
+	aTree : Tree[X];
+	newList : List[X];
+	element : X;
+begin
+		{ first copy values into the tree }
+	aTree := Tree[X]();
+	for aList.items(element) do
+		aTree.add(element);
+
+		{ then copy them back into a list }
+	newList := List[X]();
+	element := NIL;
+	for aTree.items(element) do
+		newList.addToEnd(element);
+
+		{ return the new list of values }
+	return newList;
+end;
+
+var
+	aTree : Tree[integer];
+	v : integer;
+	aList : List[integer];
+begin
+	aTree := Tree[integer]();
+
+	aTree.add(2);
+	aTree.add(4);
+	aTree.add(2);
+	aTree.add(3);
+
+	for aTree.items(v) do
+		begin
+			print(v);
+			print(" ");
+		end;
+	print("\n");
+
+	aTree.remove(2);
+
+	for aTree.items(v) do
+		begin
+			print(v);
+			print(" ");
+		end;
+	print("\n");
+
+	print("unsorted list");
+	aList := List[integer]() + 4 + 2 + 3 + 7 + 4;
+	for aList.items(v) do begin
+		print(v);
+		print(" ");
+		end;
+	print("\n");
+	aList := treeSort[integer](aList);
+	print("sorted list");
+	for aList.items(v) do begin
+		print(v);
+		print(" ");
+		end;
+	print("\n");
+
+end;
+

@@ -1,0 +1,758 @@
+{
+	The Leda Standard Run-time System
+
+	Definitions for all the standard objects
+
+}
+{
+	class object ---- the superclass of everything
+	defines information and functions common to all objects
+}
+
+class object;
+var
+	classPtr : Class;	{ pointer describing object }
+	context : object;	{ pointer to context -- not used }
+
+	function asString ()->string;
+	begin		{ return name of our class }
+		return cfunction 
+			Leda_object_at(classPtr, 2)->string;
+	end;
+
+	function sameAs (arg : object)->boolean;
+	begin		{ true if self and arg are same object }
+		return cfunction Leda_object_equals(self, arg)->boolean;
+	end;
+
+	function notSameAs (arg : object)->boolean;
+	begin		{ inverse of sameAs }
+		if self == arg then
+			return false;
+		return true;
+	end;
+end;
+
+{
+	class equality -- those things that can be compared for equality
+
+	subclasses normally add themselves as parameter value
+	subclasses also normally redefined equality operator
+	inequality operator does not usually need to be redefined
+}
+
+class equality [T : equality];
+
+	function equals (arg : T)->boolean;
+	begin
+			{  default is simply pointer equality }
+		return self == arg;
+	end;
+
+	function notEquals (arg : T)->boolean;
+	begin
+			{ use = which can be redefined }
+		if self = arg then
+			return false;
+		return true;
+	end;
+end;
+
+{
+	class boolean -- logical truth values
+	
+	a good example of the power of replacement instead of refinement
+}
+
+class boolean of equality[boolean];
+
+	function not ()->boolean;
+	begin
+		if self then
+			return false;
+		return true;
+	end;
+
+	function or (byName arg : boolean)->boolean;
+	begin
+			{ if either are true, return true }
+		if self then
+			return true;
+		if arg then
+			return true;
+		return false;
+	end;
+
+	function and (byName arg : boolean)->boolean;
+	begin
+			{ if both are true, return true }
+		if self then
+			if arg then
+				return true;
+		return false;
+	end;
+end;
+
+{
+	class True -- class for the constant value ``true''
+}
+
+class True of boolean;
+
+	function asString ()->string;
+	begin
+		return "true";
+	end;
+
+	function not ()->boolean;
+	begin
+		return false;
+	end;
+
+	function or (byName arg : boolean)->boolean;
+	begin
+		return true;
+	end;
+
+	function and (byName arg : boolean)->boolean;
+	begin
+		return arg;
+	end;
+end;
+
+{
+	class False -- class for the constant value ``false''
+}
+
+class False of boolean;
+
+	function asString ()->string;
+	begin
+		return "false";
+	end;
+
+	function not ()->boolean;
+	begin
+		return true;
+	end;
+
+	function or (byName arg : boolean)->boolean;
+	begin
+		return arg;
+	end;
+
+	function and (byName arg : boolean)->boolean;
+	begin
+		return false;
+	end;
+end;
+
+{
+	class ordered -- parent class for those quantities that
+		can be ordered
+	subclasses must redefined less than, 
+	others relations defined in terms of this
+}
+
+class ordered [T : ordered] of equality[T];
+
+	function less (arg : T)->boolean;
+	begin
+		return false;
+	end;
+
+	function lessEqual (arg : T)->boolean;
+	begin
+		return self < arg | self = arg;
+	end;
+
+	function greater (arg : T)->boolean;
+	begin
+		return ~ (self <= arg);
+	end;
+
+	function greaterEqual (arg : T)->boolean;
+	begin
+		return self > arg | self = arg;
+	end;
+
+	function between (low, high : T)->boolean;
+	begin
+		return low <= self & self <= high;
+	end;
+end;
+
+{
+	class Class -- the class representing class information
+	defined protocol for manipulating classes
+	also holds methods for class
+}
+
+class Class of ordered[Class];
+var
+	name : string;
+	size : integer;
+	parent : Class;
+
+	function asString ()->string;
+	begin
+		return name;
+	end;
+
+	function less (arg : Class)->boolean;
+	begin
+		if self == arg then	{ equal, not less }
+			return false;
+		if parent == arg then
+			return true;
+		return parent <> self & parent < arg;
+	end;
+
+	function isInstance (val : object)->boolean;
+	begin
+		return val.classPtr <= self;
+	end;
+end;
+
+{
+	function typeTest ---
+		return val if it is really instance of T,
+		otherwise return NIL.
+		T must be passed both as type parameter and as arg.
+}
+
+function typeTest [T : object] (val : object, aClass : Class)->T;
+begin
+	if aClass.isInstance(val) then
+		return cfunction Leda_object_cast(val)->T;
+	return NIL;
+end;
+
+{
+	class real --
+		class for literal real numbers and variables of type real
+}
+
+class real of ordered[real];
+
+	function asString ()->string;
+	begin
+		return cfunction Leda_real_asString(self)->string;
+	end;
+
+	function equals (arg : real)->boolean;
+	begin
+		return cfunction
+			Leda_real_equals(self, arg)->boolean;
+	end;
+
+	function less (arg : real)->boolean;
+	begin
+		return cfunction
+			Leda_real_less(self, arg)->boolean;
+	end;
+
+	function plus (arg : real)->real;
+	begin
+		return cfunction
+			Leda_real_plus(self, arg)->real;
+	end;
+
+	function minus (arg : real)->real;
+	begin
+		return cfunction
+			Leda_real_minus(self, arg)->real;
+	end;
+
+	function times (arg : real)->real;
+	begin
+		return cfunction
+			Leda_real_times(self, arg)->real;
+	end;
+
+	function divide (arg : real)->real;
+	begin
+		return cfunction
+			Leda_real_divide(self, arg)->real;
+	end;
+
+	function negation ()->real;
+	begin
+		return 0.0 - self;
+	end;
+
+	function asInteger()->integer;
+	begin
+		return cfunction
+			Leda_real_asInteger(self)->integer;
+	end;
+end;
+
+{
+	class integer -- 
+		class for integer constants and values
+}
+
+class integer of ordered[integer];
+
+	function asString ()->string;
+	begin
+		return cfunction Leda_integer_asString(self)->string;
+	end;
+
+	function sameAs (arg : object)->boolean;
+	var
+		argInt : integer;
+	begin		
+			{ if arg is an integer, use int compare }
+		argInt := typeTest[integer](arg, integer);
+		if defined(argInt) then
+			return self = argInt;
+			{ not equal to anything but integer }
+		return false;
+	end;
+
+	function equals (arg : integer)->boolean;
+	begin
+		return cfunction
+			Leda_integer_equals(self, arg)->boolean;
+	end;
+
+	function less (arg : integer)->boolean;
+	begin
+		return cfunction
+			Leda_integer_less(self, arg)->boolean;
+	end;
+
+	function or (arg : integer)->integer;
+	begin
+		return cfunction
+			Leda_integer_or(self, arg)->integer;
+	end;
+
+	function and (arg : integer)->integer;
+	begin
+		return cfunction
+			Leda_integer_and(self, arg)->integer;
+	end;
+
+	function not ()->integer;
+	begin
+		return cfunction Leda_integer_not(self)->integer;
+	end;
+
+	function plus (arg : integer)->integer;
+	begin
+		return cfunction
+			Leda_integer_plus(self, arg)->integer;
+	end;
+
+	function minus (arg : integer)->integer;
+	begin
+		return cfunction
+			Leda_integer_minus(self, arg)->integer;
+	end;
+
+	function times (arg : integer)->integer;
+	begin
+		return cfunction
+			Leda_integer_times(self, arg)->integer;
+	end;
+
+	function divide (arg : integer)->integer;
+	begin
+		return cfunction
+			Leda_integer_divide(self, arg)->integer;
+	end;
+
+	function remainder (arg : integer)->integer;
+	var
+		result : integer;
+	begin
+		result := self - (self / arg) * arg;
+		if result < 0 then
+			result := result + arg;
+		return result;
+	end;
+
+	function asReal ()->real;
+	begin
+		return cfunction
+			Leda_integer_asReal(self)->real;
+	end;
+
+	function negation ()->integer;
+	begin
+		return 0 - self;
+	end;
+end;
+
+{
+	mixed-mode arithmetic operators
+}
+
+function plus (left : integer, right : real)->real;
+begin
+	return left.asReal() + right;
+end;
+
+function plus (left : real, right : integer)->real;
+begin
+	return left + right.asReal();
+end;
+
+function times (left : integer, right : real)->real;
+begin
+	return left.asReal() * right;
+end;
+
+function times (left : real, right : integer)->real;
+begin
+	return left * right.asReal();
+end;
+
+function divide (left : integer, right : real)->real;
+begin
+	return left.asReal() / right;
+end;
+
+function divide (left : real, right : integer)->real;
+begin
+	return left / right.asReal();
+end;
+
+{
+	class string --
+		class for literal strings and variables of type string
+}
+
+class string of ordered[string];
+	
+	function asString ()->string;
+	begin
+		return self;
+	end;
+
+	function equals (arg : string)->boolean;
+	begin
+		return 0 = cfunction 
+			Leda_string_compare(self, arg)->integer;
+	end;
+
+	function less (arg : string)->boolean;
+	begin
+		return 0 > cfunction 
+			Leda_string_compare(self, arg)->integer;
+	end;
+
+	function plus (arg : object)->string;
+	begin
+		return cfunction 
+			Leda_string_concat(self, arg.asString())->string;
+	end;
+
+	function print ();
+	begin
+		cfunction Leda_string_print(self);
+	end;
+
+	function length ()->integer;
+	begin
+		return cfunction Leda_string_length(self)->integer;
+	end;
+
+	function subString (start, len : integer)->string;
+	const
+		selfLength := length();
+	begin
+		start := start % selfLength;
+		if len < 0 then
+			len := 0;
+		if start + len > selfLength then
+			len := selfLength - start;
+		return cfunction 
+			Leda_string_substring(self, start, len)->string;
+	end;
+
+	function index (pattern : string)->integer;
+	const
+		patternLength := pattern.length();
+	var
+		position : integer;
+	begin
+		for position := 0 to length() do
+			if pattern = subString(position, patternLength) then
+				return position;
+		return NIL;
+	end;
+
+end;
+
+
+{
+	------------ end of basic classes ------------
+
+	the following are a few useful functions
+}
+
+{
+	function print --- print argument value
+		or (undefined) if argument is undefined
+}
+
+function print (arg : object);
+begin
+	if defined(arg) then
+			{ convert to string, then print }
+		arg.asString().print()
+	else
+		"(undefined)".print();
+end;
+
+{
+	function readLine
+		read a line of text, return true if successful,
+		false otherwise
+}
+
+function readLine (byRef line : string)->boolean;
+begin
+	line := cfunction Leda_stdin_read()->string;
+	return defined(line);
+end;
+
+{ ------------- relations ------------------ }
+
+{
+	function trueRelation -- the always true relation
+}
+
+function trueRelation (f : relation)->boolean;
+begin
+		{ relation that is always true }
+	return true;
+end;
+
+{
+	function booleanAsRelation -- convert boolean into relation
+		(used mostly internally, but can be invoked directly)
+}
+	
+function booleanAsRelation (byName x : boolean)->relation;
+begin
+		{ convert boolean into a relation }
+	return function(future : relation)->boolean;
+		begin
+			return x & future(trueRelation);
+		end;
+end;
+
+{
+	function relationAsBoolean -- convert relation into boolean
+		finds first binding of relation,
+		or false if there is none.
+		used by if statemement, but can be invoked directly as well
+}
+
+function relationAsBoolean (future : relation)->boolean;
+begin
+		{ convert relation into a boolean }
+	return future(trueRelation);
+end;
+
+{
+	function or in various forms
+}
+
+function or (left : relation, byName right : relation)->relation;
+begin
+		{ disjunction of two relations -- do backtracking }
+	return function(future : relation)->boolean;
+		begin
+			if left(future) then return true;
+			return right(future);
+		end;
+end;
+
+function or (left : relation, byName right : boolean)->relation;
+begin
+		{ mix of relation and boolean }
+	return left | booleanAsRelation(right);
+end;
+
+function or (byName left : boolean, byName right : relation)->relation;
+begin
+		{ mix of relation and boolean }
+	return booleanAsRelation(left) | right;
+end;
+
+{
+	function and in various forms
+}
+
+function and (left : relation, byName right : relation)->relation;
+begin
+		{ conjunction of two relations -- do one after the other }
+	return function(future : relation)->boolean;
+		begin
+			return left(function(f : relation)->boolean;
+				begin
+					return right(future);
+				end);
+		end;
+end;
+
+function and (left : relation, byName right : boolean)->relation;
+begin
+		{ mix of relation and boolean }
+	return left & booleanAsRelation(right);
+end;
+
+function and (byName left : boolean, byName right : relation)->relation;
+begin
+		{ mix of relation and boolean }
+	return booleanAsRelation(left) & right;
+end;
+
+function not (arg : relation)->boolean;
+begin
+		{ convert to boolean, then negate }
+	return ~ relationAsBoolean(arg);
+end;
+
+{
+	the left arrow function 
+		note the breaking of argument passing rules
+		in the internal invocation of this function,
+		in order to allow the assignment to be performed 
+}
+
+function Leda_arrow (byRef left : object, right : object)->relation;
+begin
+	return function(future : relation)->boolean;
+		var
+			save : object;
+	begin
+			{ save the current value of the left argument }
+		save := left;
+			{ then change it to the right }
+		left := right;
+			{ try the task to be done }
+		if future(trueRelation) then
+				{ worked, report success }
+			return true;
+			{ didn't work, restore the old value }
+		left := save;
+		return false;
+	end;
+end;
+
+{
+	unify
+		attempt to make left and right the same
+}
+
+function unify [T : equality] (byRef left : T, right : T)->relation;
+begin
+	if defined(left) then
+		return left = right
+	else
+		return left <- right;
+end;
+
+{
+	function Leda_forRelation --
+		used in the relational forms of for statements.
+		The statement body is combined with the
+		stopping condition (false if no explicity condition given)
+		to form a thunk (a by-name parameter) 
+
+			function()->boolean;
+			begin
+				statement;
+				return stopCondition
+			end;
+			
+		and then the following function is invoked.
+}
+
+function Leda_forRelation (rel : relation, byName stop : boolean);
+begin
+		{ simply evaluate the argument, ignore the result }
+	if rel(function(f : relation)->boolean;
+		begin
+			return stop; 
+		end)
+	then ;
+end;
+
+function integerRange(low, high, step : integer, byRef ident : integer)->relation;
+begin
+	return ident <- low 
+		| (low <> high) & integerRange(low + step, high, step, ident);
+end;
+
+{
+	-------------- classes that make use of relations --------
+}
+
+{
+	class array
+		primitive indexed data structure
+}
+
+class array [T : object] of equality[array];
+var
+	lowerBound : integer;
+	higherBound : integer;
+	data : object;
+
+	function size ()->integer;
+	begin		{ return number of elements in collection }
+		return 1 + (higherBound - lowerBound);
+	end;
+
+	function at (index : integer)->T;
+	begin
+		if index.between(lowerBound, higherBound) then
+			return cfunction 
+				Leda_object_at(data, index - lowerBound)->T
+		else
+			return NIL;
+	end;
+
+	function atPut (index : integer, newVal : T);
+	begin
+		if index.between(lowerBound, higherBound) then
+			cfunction Leda_object_atPut(data, index - lowerBound, newVal);
+	end;
+
+	function items (byRef val : T)->relation;
+	var
+		index : integer;
+	begin
+		return (lowerBound <= higherBound) & 
+			integerRange(lowerBound, higherBound, 1, index) &
+			val <- at(index);
+	end;
+
+	function asString ()->string;
+	var
+		result : string;
+		v : T;
+	begin
+		result := "[";
+		for items(v) do 
+			result := result + v + " ";
+		return result + "]";
+	end;
+end;
+
+function newArray [T : object] (lb, hb : integer)->array[T];
+begin
+	if (hb > lb) then
+		return array[T](lb, hb,
+			cfunction Leda_object_allocate((hb-lb)+1)->object)
+	else
+		return NIL;
+end;

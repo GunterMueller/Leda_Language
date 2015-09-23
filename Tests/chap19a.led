@@ -1,0 +1,67 @@
+include "std.led";
+include "child.led";
+
+var x, y, z : string;
+begin
+  {print("sibligs");
+  for sibling(x, y) do begin
+    y.print(); " is a sibling of ".print(); x.print(); ".\n".print();
+  end;}
+
+	{ use the database directly }
+	if child("helen", "leda", "zeus") then 
+		print("helen is the child of leda and zeus\n");
+	
+	y := NIL;
+	if child("hermione", y, "menelaus") then begin
+		print("hermione is the child of ");
+		print(y);
+		print(" and menelaus\n");
+		end;
+
+	x := NIL;
+	if child(x, "clytemnestra", "agamemnon") then begin
+		print(x);
+		print(" is the child of clytemnestra and agamemnon\n");
+		end;
+
+	x := NIL;
+	for child(x, "clytemnestra", "agamemnon") do begin
+		print(x);
+		print(" is the child of clytemnestra and agamemnon\n");
+		end;
+
+	
+
+	{ test motherhood relations }
+	if motherOf("leda", "helen") then
+		print("leda is the mother of helen\n")
+	else
+		print("leda is not the mother of helen\n");
+
+	if fatherOf("clytemnestra", "iphigenia") then
+		print("clytemnestra is the father of iphigenia\n")
+	else
+		print("clytemnestra is not the father of iphigenia\n");
+
+	x := NIL;
+	if fatherOf(x, "iphigenia") then begin
+		print(x);
+		print(" is the father of iphigenia\n");
+		end;
+
+	y := NIL;
+	if motherOf("clytemnestra", y) then begin
+		print("clytemnestra is the mother of ");
+		print(y);
+		print("\n");
+		end;
+
+	y := NIL;
+	for motherOf("clytemnestra", y) do begin
+		print("clytemnestra is the Mother of ");
+		print(y);
+		print("\n");
+		end;
+
+end;

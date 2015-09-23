@@ -1,0 +1,69 @@
+{
+	vector addition chains 
+}
+
+include "std.led";
+include "flist.led";
+
+class vector of ordered[vector];
+var
+	x : integer;
+	y : integer;
+
+	function asString()->string;
+	begin
+		return "[" + x + "," + y + "]";
+	end;
+
+	function plus (v : vector)->vector;
+	begin
+			{ add x and y components together }
+		return vector(x + v.x, y + v.y);
+	end;
+
+	function equals (v : vector)->boolean;
+	begin
+			{ both x and y must be equal }
+		return x = v.x & y = v.y;
+	end;
+
+	function less (v : vector)->boolean;
+	begin
+			{ both x and y must be less }
+		return x < v.x & y < v.y;
+	end;
+end;
+
+const
+	basis := List[vector](vector(1,3),
+			List[vector](vector(2,1),
+				List[vector](vector(1, 1), NIL)));
+
+function reachFrom(start, goal : vector, byRef path : List[vector])->relation;
+var 
+	try : vector;
+begin
+		{ if we reach it, we are done }
+	return start = goal
+			{ otherwise continue searching }
+		| start < goal
+			& listItems[vector](basis, try) 
+			& path <- addToEnd [vector] (try, path)
+			& reachFrom(start + try, goal, path);
+end;
+
+var
+	p : List[vector];
+	e : vector;
+
+begin
+	p := NIL;
+	for reachFrom(vector(0,0), vector(4,5), p) do begin
+		print("path: ");
+		e := NIL;
+		for listItems[vector](p, e) do
+			print(e); 
+		print("\n");
+	end;
+	
+end;

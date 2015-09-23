@@ -1,0 +1,80 @@
+{
+	silly sentence generation, second version
+	written by tim budd
+}
+
+include "std.led";
+include "random.led";
+include "olist.led";
+include "table.led";
+
+function randomElement [X : equality] (rand : Random, anArray : array[X])->X;
+const
+	length := anArray.size();
+	eleNumber := rand.between(0, length - 1);
+begin
+	return anArray.at(anArray.lowerBound + eleNumber);
+end;
+
+var
+	grammar : Table[string, array[array[string]]];
+
+function initializeGrammar();
+begin
+	grammar := Table[string, array[array[string]]]();
+
+	grammar.atPut("<sentence>", [ 	
+		["<person>", "<opines>", "<something>"],
+		["<person>", "thinks that I am", "<property>"],
+		["I", "<opine>", "<something>"],
+		["you think that I am", "<property>"] ]);
+	grammar.atPut("<activity>", [
+		["dancing"], ["eating"], ["sleeping"]]);
+	grammar.atPut("<object>", [
+		["<person>"], ["life"], ["my computer"], ["my friends"]]);
+	grammar.atPut("<opine>", [
+		["hate"], ["am jelous of"], ["love"] ]);
+	grammar.atPut("<opines>", [
+		["hates"], ["loves"] ]);
+	grammar.atPut("<person>", [
+		["my sister"], ["my father"], ["my girlfriend"],
+		["the man next door"] ]);
+	grammar.atPut("<property>", [
+		["creative"], ["intelligent"] ]);
+	grammar.atPut("<something>", [
+		["<activity>"],
+		["<activity>", "with", "<person>"],
+		["<object>"] ]);
+end;
+
+function generateString(rand : Random, word : string);
+var
+	selection : array[string];
+	part : string;
+begin
+	if grammar.includesKey(word) then begin
+		selection := randomElement[array[string]]
+			(rand, grammar.at(word));
+		for selection.items(part) do
+			generateString(rand, part);
+	end
+	else begin
+		print(word);
+		print(" ");
+	end;
+end;
+
+const
+	rand := Random(234);
+var
+	i : integer;
+begin
+	initializeGrammar();
+	
+	for i := 1 to 10 do begin
+		generateString(rand, "<sentence>");
+		print("\n");
+	end;
+end;
+
+

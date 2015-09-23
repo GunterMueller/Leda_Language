@@ -1,0 +1,417 @@
+\chapter{Unresolved Language Issues in Leda}\label{w0}
+
+Although the Leda language as described in this manual is now reasonably
+mature, there remain a few issues that are frequently
+sources of error or frustration, and are likely targets for future changes
+in the language (or in the next generation multiparadigm language).
+In this chapter we will describe the most critical of these issues.
+(In addition, the current Leda implementation makes a number of limiting
+assumptions, thus supporting only a subset of the language defined
+in Chapter~\ref{gr0}.
+This, however, is simply an issue of implementation, and not language
+design.)
+
+In reading the following, keep in mind that an overriding design
+objective has been to keep the language as simple as possible, but no
+simpler.  Many issues could be addressed by introducing new {\em mechanisms},
+and one must always weight the cost (both conceptual and practical) against
+the benefits.
+
+\section{Semantics of Assignment and Parameter Passing}
+
+In several places we have
+described the particular semantics of assignment and parameter passing
+in Leda.  There seems little chance that the semantics of assignment
+will be changed, but there is some possibility that the technique used
+in parameter passing can be modified, particularly if a mechanism
+for cloning values is introduced (see Section~\ref{w1}).
+The principle problem with current parameter passing mechanism is that
+it does not prevent pass-by-value parameters from being modified from within
+a called procedure.  There have been various proposals made to address this
+difficulty:
+
+\begin{itemize}
+\item
+Make a clone or copy of a value before passing as a by-value parameter.
+(Requires a general cloning facility).
+\item
+Make by-value parameters constant, and forbid operations on constant
+values.  (Currently, operations on constant values are not forbidden,
+only assignment to constants).  This seems too restrictive, as many
+existing programs would then cease to work.
+\item
+Somehow characterize which functions are constant preserving and
+which are not, and only allow constant preserving functions to
+be performed on by-value parameters.
+It is not at all clear, however, how to discover which functions
+preserve constant values, and which do not.
+\end{itemize}
+
+\section{Modularization Facilities}
+
+Currently a Leda program is simply one large file.  There are ``include''
+facilities, of course, so that data structures can be moved from one
+application to another, but no mechanism for separate compilation.
+
+\section{Restricted Scoping}
+
+Currently all variables declared within a class scope are accessible
+using the dot operator.  Good style dictates that such values
+should never be modified outside the class functions, but the
+language does not enforce this restriction.  A proposed change
+would be to include C++ style modifiers for declarations which would
+separate those values which were purely local to a class from those
+which are permitted to be modified outside the class.
+
+\section{Shared and Overridden Data Fields}
+
+In an earlier version of Leda it was possible to declare data fields which
+were shared by all instances of a class.  It was also possible to
+override data fields declared in parent classes, in much the same
+way that methods are overridden.  Both features were little used,
+and due to difficulties in syntax or implementation, both have been
+dropped from the current version of the language.
+
+\section{The Subscript operator}
+
+It is conventional in programming languages, going back to the days of
+Fortran and ALGOL-60, to use braces of some sort to indicate
+array subscripts.  Should Leda follow this tradition?
+
+\begin{itemize}
+\item
+Arrays are currently only weakly part of the ``language'', if by this
+one means the syntax recognized by the parser.  Instead, arrays are
+simply a data structure that happens to be implemented in the standard
+library.  (This is not entirely true, since array literals require
+a special syntax, and thus the parser does need to know about the
+``Array'' data type in order to give a type to these literals).
+\item
+Is it right to complicate the syntax of the language (by adding array
+expressions) for just a single data structure?  Of course, one could
+say that this is not really just for arrays -- onE could add productions
+like:
+\begin{cprog}
+
+basicExpression:
+	basicExpression LEFTBRACKET expression-list RIGHTBRACKET
+
+\end{cprog}\noindent
+and say this is simply a shorthand for the function call
+\begin{cprog}
+
+	expression.subscript(arguments);
+
+\end{cprog}
+where the number of expressions must match the number of arguments provided
+for whatever the subscript operator is found in the class of the expression.
+(This would permit users to define their own array-like things, such
+as matrices or dictionaries).
+\item
+Presuming one did do something like the previous, what should the return
+type be for the subscript operator?  Note that the semantics of
+subscripts are different depending upon whether they appear as the
+target of an assignment or as an expression.
+There seems to be two choices -- either have separate operators
+for these two operations (similar to the ``at'' and ``atPut'' functions
+now in use in Leda, admittedly copied from Smalltalk), or introduce
+some mechanism for explicitly
+dealing with references as values (as in C++).  Neither of these seems
+particularly appealing.
+\end{itemize}
+
+\section{Overloaded operators and/or functions}
+
+Currently there is only a minimal amount of overloading of function
+names permitted in Leda.  Multiple copies of operator
+definitions (plus, times, ``and'' and ``or'' and the like) are permitted
+at the global scope, and nowhere else.  Types of overloading that
+are {\em not} permitted include:
+\begin{itemize}
+\item
+overloading of other function names at the global scope
+\item
+overloading of operators in local scopes (either within classes or within
+functions)
+\item
+overloading of other function names in local scopes
+\end{itemize}
+
+The argument for outlawing each of these is the same.  That is, that
+currently if {\tt bar} is a function in scope {\tt foo}, the expression
+{\tt foo.bar} has a single well defined and unambiguous meaning.
+This is a value of type function (technically, a closure), and can
+be assigned to a variable, passed as an argument, and so on.  In fact,
+all procedure calls, such as:
+\begin{cprog}
+
+	foo.bar(x, y, z)
+
+\end{cprog}\noindent
+are actually treated in two steps.  First, the expression foo.bar is
+evaluated, resulting in a closure value.  Then this closure is
+invoked as a function.
+Introducing any of the overloadings that are currently not permitted
+would destroy this property.
+
+(It is sometimes argued that at least operators should be permitted to
+be overloaded in class scopes, since operators are never invoked without
+arguments, but this is not true; several places in the book I refer
+to expression such as ``integer.plus'' and expect it to mean the
+binary function named plus defined in the class integer.  Allowing
+overloading would make such an expression ambiguous.)
+
+\section{Nested Classes}
+
+This is probably less an open point, and more simply a bug in the
+current language implementation.  A glance at the current Leda
+grammar will indicate that I had originally intended for classes
+and functions to be permitted to be nested arbitrarily -- functions
+within functions, functions within classes, classes within functions,
+or classes within classes.  While pondering the question of forward
+references (see next section) the following awkward example was discovered: 
+
+\begin{cprog}
+
+class A;
+
+	function foo();
+	begin
+		...
+	end;
+
+	class B of A;
+	 ...
+	end;
+
+	function bar();
+	begin
+		...
+	end;
+end;
+
+\end{cprog}
+
+That is, within class A a new class B is defined, which subclasses from A.
+Now, currently the Leda language has been carefully crafted so that it
+can be parsed and compiled in one pass.  This being the case, do
+instances of B inherit the function foo from class A?  what about
+the function bar?  If an instance of B is assigned to a variable
+declared as maintaining an A, can we perform the bar function on
+the result?  There are a number of technical issues that complicate
+this (meaning, subclasses are basically an extension of the parent
+class, and one can't extend something that hasn't been completely
+constructed yet).  Probably the most logical thing is to rule out
+completely the type of construct shown here.
+
+\section{Forward References for Classes or Functions}
+
+In order versions of the Leda language I separated class definition
+from method definition.  In the latest revision I have used the
+BETA idea (in fact this actually goes all the way back to SIMULA) of just
+putting everything together into one big structure.
+While this greatly simplified the language description, it did have
+the disadvantage that it makes it
+difficult to write mutually recursive classes.
+
+Consider first the analogy to mutually recursive functions.
+By mutually recursive functions I mean that a function
+A can call function B, which is some cases can call function A again.
+Mutually recursive functions can sometimes (but not always) be handed
+by nesting, as in
+\begin{cprog}
+
+	function A();
+
+		function B();
+		begin
+			...
+			A();
+		end;
+
+	begin
+		...
+		B();
+		...
+	end;	
+
+\end{cprog}
+It was the consideration of the analogy to classes that led me to discover
+the problem with nested classes described in the previous section.
+
+Another common way to get around the problem of mutually recursive
+functions, when nesting doesn't work, is to create a variable of
+type function, which is later defined:
+
+\begin{cprog}
+
+	var
+		A : function();
+
+	function B();
+	begin
+		...
+		A();
+		...
+	end;
+
+	function C();
+	begin
+		...
+		B();
+		...
+	end;
+
+	begin
+		A := C;
+	end;
+
+\end{cprog}
+This is a somewhat primitive facility that nevertheless permits functions
+to be forward referenced (that is, named before they are defined).
+A more general forward reference mechanism for functions could probably
+be defined and easily implemented, but I don't know if the payoff is
+worth the effort, because the situation is not that common,
+either nesting or the variable trick is usually sufficient, and in
+any case neither gives us any hint as to how to handle forward
+referencing of mutually recursive classes.
+
+The equivalent to the mutually recursive functions in classes is
+a class A which in one of its methods creates and manipulates
+an instance of class B,
+and a class B in which in one of its methods creates and manipulates
+an instance of class A.  In the old Leda (and in C++, Object Pascal, and
+other languages which separate the class definition from the method
+definitions) the solution is clear.  Give the class definition for A,
+followed by the class definition for B, followed by the methods for A,
+followed by the methods for B.  By the time the methods are seen
+both class definitions have been read, so both are known.
+
+\section{Copies or Clones}\label{w1}
+
+A common operation is to make a copy, or clone, of a value.
+Of course, it is easy to define a clone method in any {\em particular} class
+to do this operation.  What is harder is to try to develop a system-wide
+function or method to generalize this.
+
+The most obvious approach would be to have a function defined in class
+object, which would thus be inherited by all values.  Classes which
+wanted to change the meaning of this (such as integers or arrays)
+could then easily override the method.  But the difficulty with this
+is the question -- what should be the return type associated with this
+function?
+
+A similar situation occurs with regards to the problem of ``reverse
+polymorphism''.  That is, taking a value known to be of some superclass,
+and trying to discover whether in fact it is an element of a subclass.
+In the current Leda this is accomplished in a somewhat clumsy fashion,
+through a parameterized function named {\tt typeTest} which is defined
+as follows:
+
+\begin{cprog}
+
+function typeTest [T : object] (val : object, aClass : Class)->T;
+begin
+	if aClass.isInstance(val) then
+		return cfunction Leda_object_cast(val)->T;
+	return NIL;
+end;
+
+\end{cprog}
+
+What is clumsy about this is that the class name must be both passed
+as a type-parameter (which is used by the parser, not during execution)
+and as a value parameter (used by the execution of the procedure).
+But this seems to be the cost for having the mechanism defined
+entirely in Leda, and not handed as a special case by the parser.
+
+But this also means that subclasses can not define their own version of
+``typeTest'', as would seemingly be necessary to make an equivalent copy
+procedure.
+
+\section{Enumerated Datatypes}
+
+Older versions of the Leda language had enumerated datatypes -- differing
+from their PASCAL or C cousins only in that they printed using their
+symbolic form and could be iterated over using a relation.
+But the amount of work needed by the parser and the changes to the
+grammar and the run-time system necessitated by the introduction of
+these features seems all out of proportion to their utility.
+
+It also seemed to be the case that enumerated datatypes in previous
+versions of the language were primitive, and not easily extensible (by
+adding new functionality, for example).
+
+In the latest Leda I have found a literal array of strings to be
+almost as easy to use, and does not require any new language features.
+
+(A half-way measure might be to introduce symbols, as in Lisp or Smalltalk.
+The equivalent to an enumerated datatype would then be a literal array
+of symbols, rather than strings).
+
+\section{User Defined Constructors}
+
+In my previous extensive work in Smalltalk and C++ I found that the large
+majority of time (perhaps as high as 75\%) that constructors
+were used, they simply initialized the data fields in the newly
+generated object.  This is why in Leda this is the default behavior,
+and doesn't require any additional effort on the part of the programmer.
+Nevertheless, in the remaining 25\% of the time it would be nice
+to have more general constructor facilities that could perform
+actions other than simply initialization.
+
+I have toyed with a couple of idea.  The BETA-like solution would be
+to make classes more like functions, as in
+\begin{cprog}
+
+	class A(a, b, c : x) of B(a, b);
+		...
+	begin
+		{ do initialization here }
+	end;
+
+\end{cprog}
+
+This makes the class heading somewhat complicated to look at, (and even
+harder to parse -- for example the parent field is now an expression,
+not a type) but is a nice general mechanism.
+Unfortunately, it limits one to a single constructor for every class.
+
+Another possible solution is to permit some sort of special ``functions''
+to appear within a class, such as is done in C++, where a function
+with the same name as the class is treated differently from other
+functions.  This allows multiple constructors for a single class,
+but seems in other respects somewhat less elegant.
+
+\section{Metaclasses}
+
+Are classes objects or not?  If the answer is Yes, then what is their type?
+This is commonly called metaclass programming, and is somewhat popular at
+present.  I've always had a slight suspicion of metaclass programming,
+thinking that the mechanism is far too complex for the benefits involved.
+Leda does have class values -- see the description of class object
+and class Class in the standard library.
+Every object has a field of type Class,
+which is holding the name of the class, its size, the pointer to its
+parent class, and methods.  (The
+latter don't actually appear in the class description).
+
+Currently only two things are done with this information.
+The first is the display
+of the class name when printing the value -- (see ``asString'' in
+class object, which gets the 3rd field in the class object, namely
+the name of the class.  Note that functions from class Class can't be
+invoked in class object because of the forward referencing problems
+alluded to earlier).  The second is the loop used in the {\tt typeTest}
+function described earlier.
+
+Traditional tasks performed by metaclasses include making new
+instances and cloning.  The latter is not currently done in Leda, and
+the former is done as a built-in operation, not a metaclass task.
+
+\section{A Type inferencing system}
+
+It is somewhat of a pain to be constantly filling in the type
+arguments in parameterized functions or classes.  It would be nice
+if the system could automatically infer this information from a function
+call, as in ML or similar languages.

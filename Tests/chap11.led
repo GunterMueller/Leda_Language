@@ -1,0 +1,146 @@
+include "std.led";
+include "tree.led";
+include "event.led";
+include "random.led";
+
+const
+	randgen := Random(234);
+
+class CustomerGroup;
+var
+	gs : integer;
+
+	
+	function groupSize()->integer;
+	begin
+		if ~ defined(gs) then
+			gs := randgen.between(1, 3);
+		return gs;
+	end;
+
+	function orderSize()->integer;
+	var
+		i : integer;
+		scoops : integer;
+	begin
+		scoops := 0;
+		for i := 1 to groupSize() do
+			scoops := scoops + randgen.weighted([65, 25, 10]);
+		return scoops;
+	end;
+end;
+
+class store of Simulation;
+var
+	freeChairs : integer;
+	profits : real;
+
+	function initialize();
+	begin
+		Simulation.initialize(self);
+		freeChairs := 50;
+		profits := 0.0;
+	end;
+
+	function canSeat(number : integer)->boolean;
+	begin
+			{ is there space? }
+		if number < freeChairs then begin
+			freeChairs := freeChairs - number;
+			return true;
+			end;
+
+		{ no room }
+		return false;
+	end;
+
+	function serve(number : integer);
+	begin
+			{ serve some number of scoops }
+		profits := profits + number * 0.35;
+	end;
+
+	function releaseChairs(number : integer);
+	begin
+		freeChairs := freeChairs + number;
+	end;
+
+	function printProfits();
+	begin
+		print("profits for the day are " + profits + "\n");
+	end;
+end;
+
+const
+	theStore := store();
+
+class leaveEvent of Event;
+var
+	group : CustomerGroup;
+
+	function happen();
+	begin
+		print("group of size " + group.groupSize() + " departs\n");
+		theStore.releaseChairs(group.groupSize());
+	end;
+end;
+
+class orderEvent of Event;
+var
+	group : CustomerGroup;
+
+	function happen();
+	const
+		order := group.orderSize();		
+	begin
+		print("group of size " + group.groupSize() +
+			" orders " + order + " scoops of ice cream\n");
+		theStore.serve(order);
+			{ schedule leaving event }
+		theStore.addEvent(leaveEvent(
+			eventTime + randgen.between(15, 35),
+			group));
+	end;
+end;
+
+class arriveEvent of Event;
+var
+	group : CustomerGroup;
+
+	function happen();
+	begin
+		if theStore.canSeat(group.groupSize()) then begin
+			print("group of size " + group.groupSize() +
+				" arrives at time " + eventTime + 
+					" and is seated\n");
+				{schedule the ordering event }
+			theStore.addEvent(orderEvent(
+				eventTime + randgen.between(2, 10),
+				group));
+			end
+		else
+			print("store loses a group of size " + 
+				group.groupSize() + "\n");
+	end;
+end;
+
+var
+	time : integer;
+
+begin
+		{ initialize the framework }
+	theStore.initialize();
+		{ add some number of initial customers }
+	time := 0;
+	while time < 120 do begin
+		time := time + randgen.between(1, 10); 
+		theStore.addEvent(arriveEvent(time, CustomerGroup()));
+		end;
+
+		{ run the simulation }
+	theStore.run();
+
+		{ print the profits for the day }
+	theStore.printProfits();
+end;
+

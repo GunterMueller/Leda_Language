@@ -1,0 +1,40 @@
+{
+	split -
+		a useful string utility
+
+		requires list data structure
+}
+
+function split(line, separators : string)->List[string];
+var
+	wordList : List[string];
+	wordStart, wordEnd : integer;
+	lineLength : integer;
+begin
+		{ do initializations }
+	wordList := List[string]();
+	wordStart := 0;
+	lineLength := line.length();
+
+		{ now find the words }
+	while wordStart <= lineLength do begin
+			{ skip leading separators }
+		while wordStart < lineLength & 
+			defined(separators.index(line.subString(wordStart, 1))) do
+				wordStart := wordStart + 1;
+			{ if at end, return list }
+		if wordStart >= lineLength then
+			return wordList;
+			{ skip until something in separators }
+		wordEnd := wordStart + 1;
+		while wordEnd < lineLength &
+			~ defined(separators.index(line.subString(wordEnd, 1))) do
+				wordEnd := wordEnd + 1;
+			{ add word to word list }
+		wordList.addToEnd(line.subString(wordStart, wordEnd-wordStart));
+		wordStart := wordEnd;
+	end;
+
+	return wordList;
+end;
+

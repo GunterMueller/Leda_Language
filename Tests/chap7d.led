@@ -1,0 +1,146 @@
+{
+
+	sets constructed using characteristic functionals
+
+	written by tim budd
+}
+
+include "std.led";
+
+function emptySet [X : equality] ()->function(function(X));
+begin
+	return function(action :function(X));
+	begin
+		{ do nothing }
+		;
+	end;
+end;
+
+	{ see if element is contained in set characterized by function }
+function setIncludes [X : equality]
+	(theFun : function(function(X)), value : X)->boolean;
+var 
+	result : boolean;
+begin
+	result := false;
+
+		{ test each value in turn }
+		{ if any match argument then set the result flag }
+	theFun(function(test : X);
+		begin
+			if test = value then
+				result := true;
+		end);
+
+		{ return the final value of the result flag }
+	return result;
+end;
+
+	{ return characteristic function of set containing element }
+function setAdd [X : equality]
+	(theFun : function(function(X)), value : X)->function(function(X));
+begin
+	{ if value is already in set then do not add }
+	if setIncludes[X](theFun, value) then
+		return theFun;
+
+	{ return a new characteristic function }
+	return function(action: function(X));
+		begin
+			{ first execute action of new value }
+			action(value);
+
+			{ then execute on remainder of the values }
+			theFun(action);
+		end;
+end;
+
+	{ return characteristic function for set with element removed }
+function setRemove [X : equality]
+	(theFun : function(function(X)), value : X)->function(function(X));
+begin
+		{ if value is not in set then dont remove it }
+	if ~ setIncludes[X](theFun, value) then
+		return theFun;
+
+		{ return new characteristic function}
+	return function(action : function(X));
+		begin
+			theFun(function(testVal : X);
+				begin
+					if testVal <> value then
+						action(testVal);
+				end);
+		end;
+end;
+
+	{ return characteristic function representing union of two sets }
+function setUnion [X : equality]
+	(firstSet, secondSet : function(function(X)))-> function(function(X));
+begin
+		{ make new characteristic function }
+	return function(action: function(X));
+		begin
+				{ execute action on elements in first set }
+			firstSet(action);
+
+				{ and only on elements in second set }
+				{ that were not in first set }
+			secondSet(function(value : X);
+				begin
+					if ~setIncludes[X](firstSet, value) then
+						action(value);
+				end);
+		end;
+end;
+
+function printSet [X : equality] (aSet : function(function(X)));
+begin
+		{ print each value in the set }
+	aSet(function(val : X);
+		begin
+			print(val);
+			print(" ");
+		end);
+end;
+
+{
+	------------ test program follows ----------------
+}
+
+type
+	strSet : function(function(string));
+
+var
+	animals : array[string];
+	barkingAnimals : strSet;
+	zooAnimals : strSet;
+	name : string;
+
+begin
+	animals := ["cat", "dog", "seal", "lion", "horse"];
+
+	barkingAnimals := setAdd[string](
+		setAdd[string](emptySet[string](), "dog"), "seal");
+
+	zooAnimals := setAdd[string](
+		setAdd[string](emptySet[string](), "seal"), "lion");
+
+	for animals.items(name) do begin
+		print("a ");
+		print(name);
+		if setIncludes[string](zooAnimals, name) then
+			print(" is a zoo animal")
+		else
+			print(" is a non-zoo animal");
+		if setIncludes[string](barkingAnimals, name) then
+			print(" that barks\n")
+		else
+			print(" that does not bark\n");
+	end;
+
+	print("union of barking animals and zoo animals is: ");
+	printSet[string] (setUnion[string] (barkingAnimals, zooAnimals));
+	print("\n");
+end;
+

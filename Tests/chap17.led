@@ -1,0 +1,68 @@
+include "std.led";
+include "pattern.led";
+
+var
+	firstName, lastName, numb, scores : string;
+	text, sub : string;
+	startPos, endPos : integer;
+	i, j : integer;
+	patrn : Pattern;
+
+const
+	pat := assign(Break(","), lastName) + Match(",") + Span(" ")
+		+ assign(Break(":"), firstName) + Match(":")
+		+ assign(Span("0123456789"), numb) + Char("0123456789") * 3
+		+ assign(Match(":") + Arb(Any), scores);
+
+function reverse(a : string)->string;
+var
+	i : integer;
+	res : string;
+begin
+	res := "";
+	for i := 0 to a.length()-1 do
+		res := a.subString(i, 1) + res;
+	return res;
+end;
+
+begin
+	while readLine(text) do
+		if pat.match(text) then 
+			print(firstName + " " + lastName + ":" + numb 
+				+ scores + "\n")
+		else
+			print("didn't match\n");
+
+	{for Char("aeiou").matchLocation("mississippi", i, j) do
+		print("vowel found in location " + i + " and " + j + "\n");}
+
+	{text := "   how about this !! ";
+	for Char(" ").matchReplace(text, "*") do ;
+	print("text is now " + text + "\n");}
+
+	{for assign(Break("i"), text).match("mississippis") do
+		print(text + "\n");}
+
+	{for Same(Span("sp") + Match("i") + Span("sp"), "sip").matchLocation
+		("mississippi", i, j) do
+		print("match found in location " + i + " to " + j + "\n");}
+
+	{for Arb(Len(2)).matchText("mississippi", scores) do
+		print("matched text is " + scores + "\n");}
+
+	{for (Match("i")+Break("i") | Span("sp")+Match("i")).matchText
+		("mississippi", scores) do
+		print("matched text is " + scores + "\n");}
+
+
+	{patrn := assign(Len(1)+Arb(Len(1)), sub) + Delay(Match(reverse(sub)));
+	for patrn.matchText("cabddbae", scores) do
+		print("palendrome is " + scores + "\n"); }
+
+	{patrn := (Match("(") + Break("()") +
+		( Match(")") | Delay(patrn) + Break("()") + Match(")")))
+			+ Arb(Break("()") + Delay(patrn));
+
+	for patrn.matchText("xx(a(ac(dd)xx)yy(cc)bc)yy", scores) do
+		print("balance is " + scores + "\n"); }
+end;

@@ -1,0 +1,39 @@
+{
+	silly sentence generation, first version
+	written by tim budd
+}
+
+include "std.led";
+include "random.led";
+
+const
+	grammar := [
+		["alice and fred", "cats", "people", "teachers" ],
+		["love", "hate", "eat", "hassle"],
+		["dogs", "cats", "people", "donuts"] ];
+
+function randomElement [X : equality] (rand : Random, anArray : array[X])->X;
+const
+	length := anArray.size();
+	eleNumber := rand.between(0, length - 1);
+begin
+	return anArray.at(anArray.lowerBound + eleNumber);
+end;
+
+const
+	rand := Random(234);
+var
+	i : integer;
+	selections : array[string];
+
+begin
+	for i := 1 to 10 do begin
+		for grammar.items(selections) do begin
+			print(randomElement[string](rand, selections));
+			print(" ");
+		end;
+		print("\n");
+	end;
+end;
+
+

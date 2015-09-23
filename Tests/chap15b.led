@@ -1,0 +1,151 @@
+{
+	test for the samefringe problem
+}
+
+include "std.led";
+include "tree.led";
+
+function displayTree[T : ordered](root : Node[T]);
+begin
+	print("(");
+	if defined(root) then begin
+		displayTree[T](root.leftChild);
+		print(root.value);
+		displayTree[T](root.rightChild);
+		end;
+	print(")");
+end;
+
+class LazyList [X : equality];
+var
+	isEmpty : boolean;
+	headFun : function()->X;
+	tailFun : function()->LazyList[X];
+	headDefined : boolean;
+	tailDefined : boolean;
+
+	function empty()->boolean;
+	begin
+		return isEmpty;
+	end;
+
+	function head()->X;
+	var
+		hd : X;
+	begin
+		hd := headFun();
+		if ~ headDefined then begin
+			headDefined := true;
+			headFun := function()->X;
+				begin
+					return hd;
+				end;
+			end;
+		return hd;
+	end;
+
+	function tail()->LazyList[X];
+	var
+		tl : LazyList[X];
+	begin
+		tl := tailFun();
+		if ~ tailDefined then begin
+			tailDefined := true;
+			tailFun := function()->LazyList[X];
+					begin
+						return tl;
+					end;
+			end;
+		return tl;
+	end;
+end;
+
+function emptyList [X : equality] ()->LazyList[X];
+begin
+	return LazyList[X](
+		true, NIL, NIL, false, false);
+end;
+
+function cons [X : equality] 
+	(byName hd : X, byName tl : LazyList[X])->LazyList[X];
+begin
+	return LazyList[X](
+		false,
+		function()->X; begin return hd; end,
+		function()->LazyList[X]; begin return tl; end,
+		false, false);
+end;
+
+function printFirstN [X : equality](aList : LazyList[X], n : integer);
+var
+	i : integer;
+	theList : LazyList[X];
+begin
+	theList := aList;
+	for i := 1 to n do
+		if ~ theList.empty() then begin
+			print(theList.head());
+			print(" ");
+			theList := theList.tail();
+			end;
+	print("\n");
+end;
+
+function append [X : equality] (a, b : LazyList[X])->LazyList[X];
+begin
+	if a.empty() then
+		return b;
+	return cons[X](a.head(), append[X](a.tail(), b));
+end;
+
+function fringe [X : ordered] (subtree : Node[X])->LazyList[X];
+begin
+	if ~ defined(subtree) then
+		return emptyList[X]();
+	return append[X](fringe[X](subtree.leftChild),
+		cons[X](subtree.value, fringe[X](subtree.rightChild)));
+end;
+
+function equals (a, b : LazyList[integer])->boolean;
+begin
+	if a.empty() then
+		if b.empty() then
+			return true
+		else 
+			return false
+	else
+		if b.empty() then
+			return false;
+	if a.head() = b.head() then
+		return a.tail() = b.tail();
+	return false;
+end;
+
+function treeEquals(a, b : Tree[integer])->boolean;
+begin
+	return fringe[integer](a.root) = fringe[integer](b.root);
+end;
+
+var
+	i : integer;
+	aTree, bTree : Tree[integer];
+
+begin
+	aTree := Tree[integer]();
+	for i := 1 to 100 do
+		aTree.add(2 * i);
+	aTree.add(1);
+	{displayTree[integer](aTree.root);}
+	print("\n");
+
+	bTree := Tree[integer]();
+	for i := 1 to 50 do begin
+		bTree.add(2 * i);
+		bTree.add(202 - 2 * i);
+		end;
+	{displayTree[integer](bTree.root);}
+	print("\n");
+
+	print("equals " + treeEquals(aTree,bTree) + "\n");
+end;
+

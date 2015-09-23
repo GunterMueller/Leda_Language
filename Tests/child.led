@@ -1,0 +1,108 @@
+{
+	greek family example used in chapter 15
+	written by tim budd
+}
+
+const
+  names := ["leda", "helen", "zeus", "tyndareus", "alcmene", "agamemnon", 
+	"clytemnestra", "castor", "menelaus", "pollux", "hercules", "megara",
+	"iphigenia", "orestes", "hermione", "neoptolemy", "bert", "ernie", 
+	"alice", "sam"];
+
+  eq := unify[string];	{ shorthand notation for unify function }
+
+function child(byRef name, mother, father:string)->relation;
+begin
+  return eq(name, "helen") & eq(mother, "leda") & eq(father, "zeus")  
+ | eq(name, "clytemnestra") & eq(mother, "leda") & eq(father, "tyndareus")
+ | eq(name, "castor") & eq(mother, "leda") & eq(father, "tyndareus")
+ | eq(name, "pollux") & eq(mother, "leda") & eq(father, "zeus")
+ | eq(name, "hercules") & eq(mother, "alcmene") & eq(father, "zeus")
+ | eq(name, "hermione") & eq(mother, "helen") & eq(father, "menelaus")
+ | eq(name, "iphigenia") & eq(mother, "clytemnestra") & eq(father, "agamemnon")
+ | eq(name, "orestes") & eq(mother, "clytemnestra") & eq(father, "agamemnon")
+ | eq(name, "alice") & eq(mother, "hermione") & eq(father, "orestes")
+ | eq(name, "sam") & eq(mother, "hermione") & eq(father, "neoptolemy")
+ | eq(name, "bert") & eq(mother, "megara") & eq(father, "hercules")
+ | eq(name, "ernie") & eq(mother, "megara") & eq(father, "hercules") ;
+end;
+
+	{ motherOf relation - true if mom is mother of kid }
+function motherOf(byRef mom, kid:string)->relation;
+var 
+	dad : string;
+begin
+		{ just consult the database, ignoring dad field }
+	return child(kid, mom, dad);
+end;
+
+	{ fatherOf relation - true if dad is father of kid }
+function fatherOf(byRef dad, kid:string)->relation;
+var 
+	mom : string;
+begin
+	return child(kid, mom, dad);
+end;
+
+	{ parentOf relation - true if parent is parent to kid }
+function parentOf(byRef parent, kid:string)->relation;
+begin
+	return fatherOf(parent, kid) | motherOf(parent, kid);
+end;
+
+	{ siblings - true if left and right are siblings }
+function sibling(byRef left, right: string)->relation;
+var 
+	parent: string;
+begin
+	return parentOf(parent, left) & parentOf(parent, right) & (left <> right);
+end;
+
+	{ cousin relationship }
+function cousin(byRef left, right: string)->relation;
+var 
+	leftpar, rightpar : string;
+begin
+	return parentOf(leftpar, left) & parentOf(rightpar, right) 
+		& sibling(leftpar, rightpar) & (left <> right);
+end;
+
+function NthCousin(byRef left, right : string , N : integer, R : integer)->relation;
+var par, par2 : string;
+begin
+	if (N < 1) | (R < 0) then begin
+		print("NthCousin relatinship works only with positive values");
+		return false;
+		end;
+
+		{ first take care of times-removed relationships }
+	if R > 0 then
+		return NthCousin(left, par, N, R-1) & parentOf(par, right);
+
+		{ then take care of N-th cousin relationships }
+	if N > 1 then
+		return 
+			parentOf(par, left) & parentOf(par2, right)
+			& (left <> right)
+			& NthCousin(par, par2, N-1, R)
+	else 
+		return cousin(left, right);
+end;
+
+	{ test/generate names of people who are female }
+function female (byRef who : string)->relation;
+var 
+	child : string;
+begin
+		{ you are female if you are a mother, or on list }
+	return motherOf(who, child) | eq(who, "iphigenia") | eq(who, "alice");
+end;
+
+	{ test/generate names of people who are male }
+function male(byRef who : string)->relation;
+begin
+	if defined(who) then 
+		return ~ female(who)
+	else
+		return names.items(who) & ~ female(who);
+end;

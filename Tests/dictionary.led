@@ -1,0 +1,104 @@
+{
+	class comparableAssociation and Dictionary
+		ordered indexed collections
+
+	requires prior definition of tree type and list type
+}
+
+class compAssociation [X : ordered, Y : equality] of ordered[compAssociation];
+var
+	key : X;
+	value : Y;
+
+	function equals (anAssoc : compAssociation[X, Y])->boolean;
+	begin
+			{ equal if keys are equal, values do not matter }
+		return key = anAssoc.key;
+	end;
+
+	function less (anAssoc : compAssociation[X, Y])->boolean;
+	begin
+			{ less if keys are less, values do not matter }
+		return key < anAssoc.key;
+	end;
+end;
+
+class Dictionary [X : ordered, Y : equality];
+var
+	data : Tree[compAssociation[X, Y]];
+
+	function add(newKey : X, newValue : Y);
+	begin
+		if ~ defined(data) then
+			data := Tree[compAssociation[X, Y]]();
+		data.add(compAssociation[X, Y](newKey, newValue));
+	end;
+
+	function onEach(theFun : function(X, Y));
+	begin
+		if defined(data) then
+			data.onEach(function (item : compAssociation[X, Y]);
+				begin
+					theFun(item.key, item.value);
+				end);
+	end;
+
+	function includesKey(key : X)->boolean;
+	var
+		result : boolean;
+	begin
+		result := false;
+		onEach(function(testKey : X, testValue : Y);
+			begin
+				if key = testKey then
+					result := true;
+			end);
+		return result;
+	end;
+
+	function at(key : X)->Y;
+	var
+		result : Y;
+	begin
+			{ search for match, set result if found }
+		onEach(function(testKey : X, testValue : Y);
+			begin
+				if key = testKey then
+					result := testValue;
+			end);
+
+			{ return whatever we have }
+		return result;
+	end;
+
+	function atPut(key : X, value : Y);
+	var
+		item : compAssociation[X, Y];
+		done : boolean;
+	begin
+		done := false;
+
+			{ first try to fina an element with same key }
+		if defined(data) then
+			data.onEach(function(item : compAssociation[X, Y]);
+				begin
+					if ~ done & item.key = key then begin
+						item.value := value;
+						done := true;
+					end;
+				end);
+
+			{ if we haven't found a match yet, add it now }
+		if ~ done then
+			add(key, value);
+	end;
+
+	function items(byRef key : X, byRef value : Y)->relation;
+	var
+		item : compAssociation[X, Y];
+	begin
+		return data.items(item)
+			& unify[X](key, item.key)
+			& unify[Y](value, item.value);
+	end;
+end;

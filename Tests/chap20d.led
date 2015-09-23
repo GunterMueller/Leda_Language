@@ -1,0 +1,52 @@
+include "std.led";
+
+function runify(byRef x : integer)->relation;
+begin
+	if defined(x) then
+		return true;
+	return integerRange(1, 20, 1, x);
+end;
+
+function pythagoras(byRef x, y, z : integer)->relation;
+begin
+	return runify(x) & runify(y) & runify(z) &
+		x * x + y * y = z * z;
+end;
+
+var
+	a, b, c : integer;
+
+begin
+	if pythagoras(3, 4, 5) then
+		print("triangle 3, 4, 5 is a pythagorian triangle\n")
+	else
+		print("triangle 3, 4, 5 is not a pythagorian triangle\n");
+	if pythagoras(3, 5, 7) then
+		print("triangle 3, 5, 7 is a pythagorian triangle\n")
+	else
+		print("triangle 3, 5, 7 is not a pythagorian triangle\n");
+	if pythagoras(5, 12, c) then
+		print("triangle 5, 12, " + c + " is a pythagorian triangle\n")
+	else
+		print("no pythagorian triangle with given sides\n");
+	if pythagoras(a, 15, 17) then
+		print("triangle " + a + ", 15, 17 is a pythagorian triangle\n")
+	else
+		print("no pythagorian triangle with given sides\n");
+	if pythagoras(10, b, 13) then
+		print("triangle 10, " + b + " 13 is a pythagorian triangle\n")
+	else
+		print("no pythagorian triangle with given sides\n");
+	print("all triangles less than 20\n");
+	a := NIL; b := NIL; c := NIL;
+	for pythagoras(a, b, c) do begin
+		print("triangle ");
+		print(a);
+		print(", ");
+		print(b);
+		print(", ");
+		print(c);
+		print(" is a pythagorian triangle\n");
+		end;
+end;
+

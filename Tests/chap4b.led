@@ -1,0 +1,37 @@
+{
+	prime sieve program from chapter 4
+	written by Tim Budd, November 1993
+}
+
+include "std.led";
+include "olist.led";
+
+const
+	N := 100;
+var
+	numbers, primes : List[integer];
+	i, newPrime : integer;
+begin
+		{ step 1, build the initial list of numbers }
+	numbers := List[integer]();
+	for i := 2 to N do
+		numbers.add((2+N)-i);
+
+		{ step 2, build the list of primes }
+	primes := List[integer]();
+	while numbers.first(newPrime) do begin
+
+			{ add new prine to front of list }
+		primes.addToEnd(newPrime);
+
+			{ remove multiples }
+		numbers.removeTest
+			(function (x : integer)->boolean;
+				begin
+					return 0 = x % newPrime;
+				end);
+	end;
+
+		{ step 3, print the list of primes }
+	primes.listPrint();
+end;

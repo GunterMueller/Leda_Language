@@ -1,0 +1,264 @@
+{
+	using functionals
+}
+
+include "std.led";
+include "flist.led";
+
+function reduce [X : equality, Y : object]
+	(ident : Y, binFun : function(X, Y)->Y)->function(List[X])->Y;
+	function reduceFun (aList : List[X])->Y;
+	begin
+		if empty[X](aList) then
+			return ident
+		else
+			return binFun(head[X](aList), 
+				reduceFun(tail[X](aList)));
+	end;
+begin
+	return reduceFun;
+end;
+
+const
+	isum := reduce[integer, integer](0, integer.plus);
+	rsum := reduce[real, real](0.0, real.plus);
+	prod := reduce[integer, integer](1, integer.times);
+	copy := reduce[integer, List[integer]](NIL, add[integer]);
+	reverse := reduce[integer, List[integer]](NIL, addToEnd[integer]);
+
+const
+	length := reduce[real, integer](0,
+		function (ele : real, soFar : integer)->integer;
+		begin
+			return soFar + 1;
+		end);
+
+{
+	define arithmetic operators for functions
+}
+
+function divide (left : function(List[real])->real, 
+	right : function(List[real])->integer)-> function(List[real])->real;
+begin
+	return function (aList : List[real])->real;
+		begin
+			return left(aList) / right(aList);
+		end;
+end;
+
+const
+	average := rsum / length;
+
+{
+	a few simple curries
+}
+
+const
+	increment := 1.plus;
+	negation := 0.minus;
+	double := 2.times;
+	reciprocol := 1.0.divide;
+	positive := 0.less;
+	negative := 0.greater;
+	nonZero := 0.notEquals;
+	zero := 0.equals;
+
+{
+	more general curry-building functions
+}
+
+function curry1[X, Y, Z: object]
+	(boundFun : function(X, Y)->Z, boundValue : X)->function(Y)->Z;
+begin
+	return function (item : Y)->Z;
+		begin
+			return boundFun(boundValue, item);
+		end;
+end;
+
+function curry2[X, Y, Z: object]
+	(boundFun : function(X, Y)->Z, boundValue : Y)->function(X)->Z;
+begin
+	return function (item : X)->Z;
+		begin
+			return boundFun(item, boundValue);
+		end;
+end;
+
+const
+	half := curry2 [real, real, real] (real.divide, 2.0);
+	parity := curry2 [integer, integer, integer] (integer.remainder, 2);
+
+function count [X : equality]
+	(theList : List[X], pred : function(X)->boolean)->integer;
+begin
+	return reduce[X, integer]
+		(0,
+		function (ele : X, soFar : integer)->integer;
+		begin
+			if pred(ele) then
+				return soFar + 1;
+			return soFar;
+		end)(theList);
+end;
+
+function leng [X : equality] (theList : List[X])->integer;
+begin
+	return reduce[X, integer](0,
+		function (ele : X, soFar : integer)->integer;
+		begin
+			return soFar + 1;
+		end)(theList);
+end;
+
+function allSelect [X : equality]
+	(theList : List[X], pred : function(X)->boolean)->boolean;
+begin
+		{ return true if all element satisfy property }
+	return count[X](theList, pred) = leng[X](theList);
+end;
+
+function subset [X : equality] (first, second : List[X])->boolean;
+begin
+	return allSelect[X](first, 
+		curry1[List[X], X, boolean] (includes[X], second));
+end;
+
+function compose [X, Y, Z : object]
+	(f : function(Y)->Z, g : function(X)->Y)->function(X)->Z;
+begin
+	return function (value : X)->Z;
+		begin
+			return f(g(value));
+		end;
+end;
+
+function oneToN(N : integer)->List[integer];
+begin
+		{ list up to zero is empty }
+	if N <= 0 then
+		return NIL
+		{ append N on to list up to N-1 }
+	else
+		return addToEnd[integer](N, oneToN(N-1));
+end;
+
+function map [X, Y : equality]
+	(theFun : function(X)->Y) -> function(List[X])->List[Y];
+begin
+	return reduce[X, List[Y]](NIL,	{ identity is empty list }
+		function (ele : X, soFar : List[Y])->List[Y];
+		begin
+				{ place transformed element at end of list }
+			return add[Y](theFun(ele), soFar);
+		end);
+end;
+
+function isPrime(N : integer)->integer;
+begin
+	if 2 >= count[integer](oneToN(N),
+		compose[integer,integer,boolean](zero, N.remainder))
+		then return N
+	else
+		return 0;
+end;
+
+const
+	primesTo :=
+		compose[integer,List[integer],List[integer]]
+			(map[integer,integer](isPrime), 
+			oneToN);
+
+function filter [X : equality] 
+	(pred : function(X)->boolean)->function(List[X])->List[X];
+begin
+	return reduce[X, List[X]] (NIL,
+		function (ele : X, soFar : List[X])->List[X];
+		begin
+			if pred(ele) then
+				return add[X](ele, soFar);
+			return soFar;
+		end);
+end;
+
+const
+	nonZeroFilter := filter[integer](nonZero);
+
+const
+	primes2To :=
+		compose[integer,List[integer],List[integer]]
+			(nonZeroFilter,
+			compose[integer,List[integer],List[integer]]
+				(map[integer,integer](isPrime), 
+				oneToN));
+
+function variance(theList : List[real])->real;
+const
+	squares := map[real, real](
+			compose[real,real,real](
+			function(x : real)->real; begin return x * x; end,
+			curry2[real,real,real](real.minus, average(theList))))
+				(theList);
+begin
+	return rsum(squares) / length(theList);
+end;
+
+
+var 
+	aList : List[integer];
+	bList : List[integer];
+	rList : List[real];
+begin
+	aList := add[integer](4, NIL);
+	aList := add[integer](3, aList);
+	aList := add[integer](2, aList);
+	aList := add[integer](1, aList);
+
+	print("original list is ");
+	listPrint[integer](aList);
+	print("sum is " + isum(aList) + "\n");
+	print("product is " + prod(aList) + "\n");
+
+	print("copy is ");
+	listPrint[integer](copy(aList));
+	print("reverse is ");
+	listPrint[integer](reverse(aList));
+
+	rList := add[real](4.3, NIL);
+	rList := add[real](3.1, rList);
+	rList := add[real](2.5, rList);
+	rList := add[real](1.7, rList);
+	print("real list "); listPrint[real](rList);
+
+
+	print("length of real list " + length(rList) + "\n");
+	print("average of real list " + average(rList) + "\n");
+
+	print("test a few curries\n");
+	print("successor of 7 " + increment(7) + "\n");
+	print("negation of 3 " + negation(3) + "\n");
+	print("reciprocol of 8.0 " + reciprocol(8.0) + "\n");
+	print("double of 6 " + double(6) + "\n");
+	print("positive test for 3 " + positive(3) + "\n");
+	print("negative test for 3 " + negative(3) + "\n");
+	print("nonzero test for 3 " + nonZero(3) + "\n");
+
+	print("half of 7.2 " + half(7.2) + "\n");
+	print("parity of 3 " + parity(3) + "\n");
+	print("parity of 6 " + parity(6) + "\n");
+	print("parity of -1 " + parity(-1) + "\n");
+
+	print("subset test ");
+	{print(subset[integer](asList[integer]([1, 3]), aList));}
+	print("\n");
+
+	print("is 7 prime ?"); print(isPrime(7)); print("\n");
+	print("is 9 prime ?"); print(isPrime(9)); print("\n");
+
+	print("primes to 25 ");
+	listPrint[integer](primesTo(25));
+	listPrint[integer](nonZeroFilter(primesTo(25)));
+	listPrint[integer](primes2To(25));
+
+	print("variance is " + variance(rList) + "\n");
+end;

@@ -1,0 +1,62 @@
+{
+	concordance program
+	written by tim budd
+}
+
+include "std.led";
+include "olist.led";
+include "tree.led";
+include "split.led";
+include "dictionary.led";
+
+class Concordance of Dictionary[string, OrderedSet[integer]];
+
+	function buildConcordance();
+	var
+		words : List[string];
+		line, word : string;
+		lineNumber : integer;
+	begin
+		lineNumber := 0;
+
+			{ read each line of input }
+		while readLine(line) do begin
+			lineNumber := lineNumber + 1;
+				{ split the line into words }
+			words := split(line, " \t\n.,:;?");
+				{ add each word to concordance }
+			for words.items(word) do begin
+				if ~ includesKey(word) then
+					atPut(word, OrderedSet[integer]());
+				at(word).add(lineNumber);
+			end;
+		end;
+	end;
+
+	function printConcordance();
+	var
+		word : string;
+		aSet : OrderedSet[integer];
+		lineNumber : integer;
+	begin
+			{ iterate over lines }
+		for items(word, aSet) do begin
+			print(word); print(": ");
+				{ then iterate over lines }
+			for aSet.items(lineNumber) do begin
+				print(lineNumber); print(" ");
+			end;
+			print("\n");
+		end;
+	end;
+
+end;
+
+var
+	aConcordance : Concordance;
+begin
+	aConcordance := Concordance();
+	aConcordance.buildConcordance();
+	aConcordance.printConcordance();
+end;
+

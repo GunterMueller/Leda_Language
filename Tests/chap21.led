@@ -1,0 +1,254 @@
+{
+	N-queens using constraint logic programming
+}
+
+include "std.led";
+
+function dbrel(x : integer)->boolean;
+begin
+	print("db rel: " + x + "\n");
+	return true;
+end;
+
+class Constraint;
+
+	function value (byRef i : integer)->relation;
+	begin
+			{ this method should always be overridden }
+		return false;
+	end;
+
+	function notEquals (aConstraint : Constraint)->relation;
+	var 
+		i, j : integer;
+	begin
+		return value(i) & aConstraint.value(j) & (i <> j);
+	end;
+
+	function equals (aConstraint : Constraint)->relation;
+	var 
+	i, j : integer;
+	begin
+		return value(i) & aConstraint.value(j) & (i = j);
+	end;
+
+	function assign (v : integer);
+	begin
+		{ should be subclassed }
+		print("constraint assigned called - should subclass\n");
+	end;
+
+	function asString()->string;
+	var 
+		i : integer;
+	begin
+		if value(i) then begin
+			return i.asString();
+			end
+		else
+			return "<constraint>";
+	end;
+end;
+
+class Range of Constraint;
+var
+	low : integer;
+	high : integer;
+	bound : integer;
+
+	function value(byRef i : integer)->relation;
+	begin
+		if defined(bound) then
+			return i <- bound
+	else
+		return 
+			integerRange(low, high, 1, bound)
+				& i <- bound;
+	end;
+
+	function assign(val : integer);
+	begin
+		if defined(bound) & bound <> val then
+			print("assignment invalidates constraint\n")
+		else if val < low | val > high then
+			print("assignment to range out of bounds\n")
+		else
+			bound := val;
+	end;
+end;
+
+class AdditionConstraint of Constraint;
+var
+	left : Constraint;
+	right : integer;
+
+	function value (byRef i : integer)->relation;
+	var 
+		x : integer;
+	begin
+		return left.value(x) & i <- x + right;
+	end;
+
+	function assign (val : integer);
+	begin
+		if defined(val) then
+			left.assign(val - right)
+		else
+			left.assign(val);
+	end;
+end;
+
+function plus (left : Constraint, right : integer)->Constraint;
+begin
+	return AdditionConstraint(left, right);
+end;
+
+function minus (left : Constraint, right : integer)->Constraint;
+begin
+	return AdditionConstraint(left, - right);
+end;
+
+class MultiplicationConstraint of Constraint;
+var
+	left : Constraint;
+	right : integer;
+
+	function value (byRef i : integer)->relation;
+	var 
+		x : integer;
+	begin
+		return left.value(x) & i <- x * right;
+	end;
+
+	function assign (val : integer);
+	begin
+		if defined(val) then
+			left.assign(val / right)
+		else
+			left.assign(val);
+	end;
+end;
+
+function times (left : Constraint, right : integer)->Constraint;
+begin
+	return MultiplicationConstraint(left, right);
+end;
+
+class DivisionConstraint of Constraint;
+var
+	left : Constraint;
+	right : integer;
+
+	function value (byRef i : integer)->relation;
+	var 
+		x : integer;
+	begin
+		return left.value(x) & i <- x / right;
+	end;
+
+	function assign (val : integer);
+	begin
+		if defined(val) then
+			left.assign(val * right)
+		else
+			left.assign(val);
+	end;
+end;
+
+function divide (left : Constraint, right : integer)->Constraint;
+begin
+	return DivisionConstraint(left, right);
+end;
+
+class ConstraintVariable of Constraint;
+var
+	bound : integer;
+
+	function assign (val : integer);
+	begin
+		{ just set our value }
+		bound := val;
+	end;
+
+	function value (byRef i : integer)->relation;
+	begin
+		if defined(bound) then
+			return i <- bound;
+		return false;
+	end;
+end;
+
+function forAll(lower, upper : integer, 
+		fn : function(integer)->relation)->relation;
+begin
+		{ return true if fn is true for all integers }
+	if lower > upper then
+		return true;
+	return fn(lower) & forAll(lower + 1, upper, fn);
+end;
+
+var
+	q : array[Constraint];
+
+function queenConstraint(n : integer)->relation;
+begin
+	return forAll(1, n-1,
+		function(i : integer)->relation;
+		begin
+			return q.at(i) <> q.at(n)	{ check rows }
+				& q.at(i)+i <> q.at(n)+n { check diagonals }
+				& q.at(i)-i <> q.at(n)-n;
+		end);
+end;
+
+var
+	i, j, k : integer;
+	C, F, K : Constraint;
+const
+	N := 6;
+begin
+	{ first test out constraint variables }
+	F := ConstraintVariable(NIL);
+	C := ((F - 32) * 5) / 9;
+	K := C + 273;
+
+		{ first try one direction}
+	F.assign(40);
+	print(C); print(" ");
+	print(K); print("\n");
+
+
+		{ then another }
+	F.assign(NIL);
+	C.assign(8);
+	print(F); print(" ");
+	print(K); print("\n");
+
+		{ finally the third }
+	F.assign(NIL);
+	K.assign(300);
+	print(C); print(" "); 
+	print(F); print("\n");
+
+	F := Range(-200,200);
+	C := ((F - 32) * 5) / 9;
+	K := C + 273;
+
+	if (F = C) then
+		print("common temp " + F + "\n")
+	else
+		print("no common temp");
+
+		{ N-queen problem }
+	q := newArray[Constraint](1, N);
+
+	for i := 1 to N do
+		q.atPut(i,Range(1, N));
+
+	if forAll(1, N, queenConstraint) then begin
+		print("got a solution\n");
+		for i := 1 to N do 
+			print(" " + q.at(i));
+		print("\n");
+		end;
+end;

@@ -1,0 +1,189 @@
+{
+	geneological example, using table
+}
+
+include "std.led";
+include "olist.led";
+include "table.led";
+
+const
+  names := ["leda", "helen", "zeus", "tyndareus", "alcmene", "agamemnon", 
+	"clytemnestra", "castor", "menelaus", "pollux", "hercules", "megara",
+	"iphigenia", "orestes", "hermione", "neoptolemy", "bert", "ernie", 
+	"alice", "sam"];
+
+  eq := unify[string];	{ shorthand notation for unify function }
+
+var 
+	motherhood : Table[string, string];
+	fatherhood : Table[string, string];
+
+function childAssert(name, mother, father : string);
+begin
+	{ add new entries into the mother and father databases }
+	motherhood.atPut(name, mother);
+	fatherhood.atPut(name, father);
+end;
+
+function child (byRef name, mother, father : string)->relation;
+begin
+	return motherhood.items(name, mother) 
+		& fatherhood.items(name, father);
+end;
+
+	{ motherOf relation - true if mom is mother of kid }
+function motherOf(byRef mom, kid:string)->relation;
+var 
+	dad : string;
+begin
+		{ just consult the database, ignoring dad field }
+	return child(kid, mom, dad);
+end;
+
+	{ fatherOf relation - true if data is father of kid }
+function fatherOf(byRef dad, kid:string)->relation;
+var 
+	mom : string;
+begin
+	return child(kid, mom, dad);
+end;
+
+function parentOf(byRef par, kid:string)->relation;
+begin
+	return fatherOf(par, kid) | motherOf(par, kid);
+end;
+
+	{ siblings - true if left and right are siblings }
+function sibling(byRef left, right: string)->relation;
+var par: string;
+begin
+	return parentOf(par, left) & parentOf(par, right) & (left <> right);
+end;
+
+	{ cousin relationship }
+function cousin(byRef left, right: string)->relation;
+var leftpar, rightpar : string;
+begin
+	return parentOf(leftpar, left) & parentOf(rightpar, right) 
+		& sibling(leftpar, rightpar) & (left <> right);
+end;
+
+function NthCousin(byRef left, right : string , N : integer, R : integer)->relation;
+var par, par2 : string;
+begin
+	if (N < 1) | (R < 0) then begin
+		print("NthCousin relatinship works only with positive values");
+		return false;
+		end;
+
+		{ first take care of times-removed relationships }
+	if R > 0 then
+		return NthCousin(left, par, N, R-1) & parentOf(par, right);
+
+		{ then take care of N-th cousin relationships }
+	if N > 1 then
+		return 
+			parentOf(par, left) & parentOf(par2, right)
+			& (left <> right)
+			& NthCousin(par, par2, N-1, R)
+	else 
+		return cousin(left, right);
+end;
+
+function female (byRef who : string)->relation;
+var 
+	child : string;
+begin
+		{ you are female if you are a mother, or on list }
+	return motherOf(who, child) | eq(who, "iphigenia") | eq(who, "alice");
+end;
+
+function male(byRef who : string)->relation;
+begin
+	if defined(who) then 
+		return ~ female(who)
+	else
+		return names.items(who) & ~ female(who);
+end;
+
+var x, y, z : string;
+begin
+
+	motherhood := Table[string, string]();
+	fatherhood := Table[string, string]();
+
+	childAssert("helen",  "leda", "zeus")  ;
+	childAssert("clytemnestra",  "leda", "tyndareus");
+	childAssert("castor",  "leda", "tyndareus");
+	childAssert("pollux",  "leda", "zeus");
+	childAssert("hercules",  "alcmene", "zeus");
+	childAssert("hermione",  "helen", "menelaus");
+	childAssert("iphigenia",  "clytemnestra", "agamemnon");
+	childAssert("orestes",  "clytemnestra", "agamemnon");
+	childAssert("alice",  "hermione", "orestes");
+	childAssert("sam",  "hermione", "neoptolemy");
+	childAssert("bert",  "megara", "hercules");
+	childAssert("ernie",  "megara", "hercules") ;;
+
+  {print("sibligs");
+  for sibling(x, y) do begin
+    y.print(); " is a sibling of ".print(); x.print(); ".\n".print();
+  end;}
+
+	{ use the database directly }
+	if child("helen", "leda", "zeus") then 
+		print("helen is the child of leda and zeus\n");
+	
+	y := NIL;
+	if child("hermione", y, "menelaus") then begin
+		print("hermione is the child of ");
+		print(y);
+		print(" and menelaus\n");
+		end;
+
+	x := NIL;
+	if child(x, "clytemnestra", "agamemnon") then begin
+		print(x);
+		print(" is the child of clytemnestra and agamemnon\n");
+		end;
+
+	x := NIL;
+	for child(x, "clytemnestra", "agamemnon") do begin
+		print(x);
+		print(" is the child of clytemnestra and agamemnon\n");
+		end;
+
+	
+
+	{ test motherhood relations }
+	if motherOf("leda", "helen") then
+		print("leda is the mother of helen\n")
+	else
+		print("leda is not the mother of helen\n");
+
+	if fatherOf("clytemnestra", "iphigenia") then
+		print("clytemnestra is the father of iphigenia\n")
+	else
+		print("clytemnestra is not the father of iphigenia\n");
+
+	x := NIL;
+	if fatherOf(x, "iphigenia") then begin
+		print(x);
+		print(" is the father of iphigenia\n");
+		end;
+
+	y := NIL;
+	if motherOf("clytemnestra", y) then begin
+		print("clytemnestra is the mother of ");
+		print(y);
+		print("\n");
+		end;
+
+	y := NIL;
+	for motherOf("clytemnestra", y) do begin
+		print("clytemnestra is the Mother of ");
+		print(y);
+		print("\n");
+		end;
+
+end;

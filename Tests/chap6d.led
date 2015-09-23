@@ -1,0 +1,183 @@
+include "std.led";
+include "olist.led";
+include "table.led";
+
+const
+	monthnames := ["january", "february", "march", "april", "may",
+		"june", "july", "august", "september", "october",
+		"november", "december"];
+	criminals := ["pope", "halsey", "talbot"];
+	weapons := ["knife", "rope", "fountainpen", "gun"];
+	location := ["exeter", "whyle", "zeeland"];
+
+var
+	temps : Table[integer, integer];
+	months : Table[integer, string];
+	stemps : Table[string, integer];
+
+	dataValues : List[integer];
+
+	weaponData : Table[string, string];
+	sightings : Table[string, string];
+
+	i : integer;
+	j : integer;
+	month : string;
+
+function mode (aList : List[integer])->integer;
+var freqTable : Table[integer, integer];
+i, j, maxitem, maxfreq : integer;
+begin
+	freqTable := Table[integer, integer]();
+
+		{ first build a table of scores and frequencies}
+	for aList.items(i) do
+		if freqTable.includesKey(i) then
+			freqTable.atPut(i, freqTable.at(i) + 1)
+		else
+			freqTable.atPut(i, 1);
+
+		{ now find the element with greatest frequency }
+	maxfreq := 0;
+	i := NIL; j := NIL;
+	for freqTable.items(i, j) do
+		if j > maxfreq then begin
+			maxfreq := j;
+			maxitem := i;
+		end;
+
+		{ return the element with max frequency }
+	return maxitem;
+end;
+
+function suspect(wp : string, loc : string);
+var name : string;
+begin
+	for weaponData.items(name, wp) do
+		if sightings.items(name, loc) then begin
+			print(name);
+			print(" is a possible suspect\n");
+			print("for a crime committed with a ");
+			print(wp);
+			print(" in ");
+			print(loc);
+			print("\n");
+			end;
+end;
+
+begin
+	temps := Table[integer, integer]();
+	months := Table[integer, string]();
+	stemps := Table[string, integer]();
+
+		{ initialize temp data }
+	temps.atPut(1, -12);	{ january }
+	temps.atPut(2, -20);	{ feburary }
+	temps.atPut(3, 2);	{ march }
+	temps.atPut(4, 7);	{ april }
+	temps.atPut(5, 20);	{ may }
+	temps.atPut(6, 22);	{ june }
+	temps.atPut(7, 25);	{ july }
+	temps.atPut(8, 35);	{ august }
+	temps.atPut(9, 22);	{ september }
+	temps.atPut(10, 12);	{ october }
+	temps.atPut(11, 10);	{ november }
+	temps.atPut(12, -5);	{ december }
+
+		{  print out data values }
+	for i := 1 to 12 do begin
+		print("average low temperature for month ");
+		print(i);
+		print(" is ");
+		print(temps.at(i));
+		print("\n");
+	end;
+
+		{ initialize months }
+	months.atPut(1, "January");
+	months.atPut(2, "February");
+	months.atPut(3, "March");
+	months.atPut(4, "April");
+	months.atPut(5, "May");
+	months.atPut(6, "June");
+	months.atPut(7, "July");
+	months.atPut(8, "August");
+	months.atPut(9, "September");
+	months.atPut(10, "October");
+	months.atPut(11, "November");
+	months.atPut(12, "December");
+
+		{  print out data values }
+	for i := 1 to 12 do begin
+		print("average low temperature for ");
+		print(months.at(i));
+		print(" is ");
+		print(temps.at(i));
+		print("\n");
+	end;
+
+
+		{ initialize stringtemp data }
+	stemps.atPut("january", -12);	
+	stemps.atPut("february", -20);
+	stemps.atPut("march", 2);
+	stemps.atPut("april", 7);
+	stemps.atPut("may", 20);
+	stemps.atPut("june", 22);
+	stemps.atPut("july", 25);
+	stemps.atPut("august", 35);
+	stemps.atPut("september", 22);
+	stemps.atPut("october", 12);
+	stemps.atPut("november", 10);
+	stemps.atPut("december", -5);
+
+		{  print out data values }
+	for monthnames.items(month) do begin
+		print("average low temperature for ");
+		print(month);
+		print(" is ");
+		print(stemps.at(month));
+		print("\n");
+	end;
+
+
+		{ compute mode of list }
+	dataValues := List[integer]();
+	dataValues.add(27);
+	dataValues.add(53);
+	dataValues.add(19);
+	dataValues.add(27);
+	dataValues.add(35);
+	dataValues.add(53);
+	dataValues.add(64);
+	dataValues.add(27);
+	dataValues.add(35);
+	dataValues.add(12);
+	dataValues.add(27);
+	dataValues.add(27);
+
+	print("mode of list ");
+	print(mode(dataValues));
+	print("\n");
+
+	weaponData := Table[string, string]();
+	sightings := Table[string, string]();
+
+		{ add criminal data to database }
+	weaponData.add("pope", "rope");
+	weaponData.add("talbot", "gun");
+	weaponData.add("pope", "gun");
+	weaponData.add("halsey", "fountainpen");
+	weaponData.add("halsey", "knife");
+	weaponData.add("talbot", "knife");
+	weaponData.add("halsey", "gun");
+
+	sightings.add("pope", "whyle");
+	sightings.add("pope", "exeter");
+	sightings.add("talbot", "exeter");
+	sightings.add("halsey", "whyle");
+	sightings.add("halsey", "zeeland");
+
+	suspect("knife", "exeter");
+
+end;

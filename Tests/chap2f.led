@@ -1,0 +1,66 @@
+{
+	object-oriented programming version of sort procedure
+	from chapter 2
+	written by tim budd
+}
+
+include "std.led";
+include "intList.led";
+
+
+class orderedList;
+var
+	value : integer;
+	next : orderedList;
+
+	function append(newLink : orderedList);
+	begin
+		next := newLink;
+	end;
+
+	function check()->orderedList;
+	var
+		n : orderedList;
+	begin
+		if defined(self.next) then
+			if next.value < self.value then begin
+				n := self.next;
+				self.next := n.next;
+				n.append(self.check());
+				return n;
+				end;
+		return self;
+	end;
+end;
+
+function sort(aList : intList)->orderedList;
+var
+	newList : orderedList;
+begin
+	while defined(aList) do begin
+		newList := orderedList(head(aList), newList);
+		newList := newList.check();
+		aList := tail(aList);
+		end;
+	return newList;
+end;
+
+var
+	in : intList;
+	out, p : orderedList;
+begin
+
+	in := intList(2, intList(5, intList(1, intList(4, intList(7, NIL)))));
+
+	out := sort(in);
+	print("sorted output\n");
+		{ can't use listPrint, since result isn't ordered list }
+	p := out;
+	while defined(p) do begin
+		print(p.value);
+		print(" ");
+		p := p.next;
+	end;
+	print("\n");
+end;
+

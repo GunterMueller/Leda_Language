@@ -1,0 +1,294 @@
+{
+	lazy list class
+}
+
+include "std.led";
+
+class LazyList [X : equality];
+var
+	isEmpty : boolean;
+	headFun : function()->X;
+	tailFun : function()->LazyList[X];
+	headDefined : boolean;
+	tailDefined : boolean;
+
+	function empty()->boolean;
+	begin
+		return isEmpty;
+	end;
+
+	function head()->X;
+	var
+		hd : X;
+	begin
+		hd := headFun();
+		if ~ headDefined then begin
+			headDefined := true;
+			headFun := function()->X;
+				begin
+					return hd;
+				end;
+			end;
+		return hd;
+	end;
+
+	function tail()->LazyList[X];
+	var
+		tl : LazyList[X];
+	begin
+		tl := tailFun();
+		if ~ tailDefined then begin
+			tailDefined := true;
+			tailFun := function()->LazyList[X];
+					begin
+						return tl;
+					end;
+			end;
+		return tl;
+	end;
+end;
+
+function emptyList [X : equality] ()->LazyList[X];
+begin
+	return LazyList[X](
+		true, NIL, NIL, false, false);
+end;
+
+function cons [X : equality] 
+	(byName hd : X, byName tl : LazyList[X])->LazyList[X];
+begin
+	return LazyList[X](
+		false,
+		function()->X; begin return hd; end,
+		function()->LazyList[X]; begin return tl; end,
+		false, false);
+end;
+
+function map [X, Y : equality] 
+	(transform : function(X)->Y, data : LazyList[X])->LazyList[Y];
+begin
+	if data.empty() then
+		return emptyList[Y]()
+	else
+		return cons[Y](transform(data.head()), 
+			map[X, Y](transform, data.tail()));
+end;
+
+function printFirstN [X : equality](aList : LazyList[X], n : integer);
+var
+	i : integer;
+	theList : LazyList[X];
+begin
+	theList := aList;
+	for i := 1 to n do
+		if ~ theList.empty() then begin
+			print(theList.head());
+			print(" ");
+			theList := theList.tail();
+			end;
+	print("\n");
+end;
+
+function iToj(i, j : integer)->LazyList[integer];
+begin
+	if i <= j then
+		return cons[integer](i, iToj(i+1, j))
+	else
+		return emptyList[integer]();
+end;
+
+function oneToN(n : integer)->LazyList[integer];
+begin
+	return iToj(1, n);
+end;
+
+function reduce [X : equality, Y : object] (aList : LazyList[X], ident : Y,
+	binFun: function(X, Y)->Y )->Y;
+begin
+	if aList.empty() then
+		return ident
+	else
+		return binFun(aList.head(), 
+			reduce[X, Y](aList.tail(), ident, binFun));
+end;
+
+function count [X : equality]
+	(theList : LazyList[X], pred : function(X)->boolean)->integer;
+begin
+	return reduce[X, integer]
+		(theList,
+		0,
+		function (ele : X, soFar : integer)->integer;
+		begin
+			if pred(ele) then
+				return soFar + 1;
+			return soFar;
+		end);
+end;
+
+function isPrime(N : integer)->integer;
+begin
+	if 2 >= count[integer]
+		(map[integer, integer](N.remainder, oneToN(N)), 0.equals)
+	then
+		return N
+	else
+		return 0;
+end;
+
+function filter [X : equality] 
+	(aList : LazyList[X], pred : function(X)->boolean)->LazyList[X];
+begin
+	if aList.empty() then
+		return aList;
+	if pred(aList.head()) then
+		return cons[X](aList.head(), filter[X](aList.tail(), pred))
+	else
+		return filter[X](aList.tail(), pred);
+end;
+
+function sieve(aList : LazyList[integer])->LazyList[integer];
+const
+	n := aList.head();
+
+	function divides(x : integer)->boolean;
+	begin
+		return 0 <> x % n;
+	end;
+begin
+	return cons[integer](n, sieve(filter[integer](aList.tail(), divides)));
+end;
+
+function expansion [X : equality] 
+	(start : X, next : function(X)->X)->LazyList[X];
+begin
+	return cons[X](start, expansion[X](next(start), next));
+end;
+
+function abs (n : real)->real;
+begin
+	if n < 0.0 then
+		return - n;
+	return n;
+end;
+
+function converge (terms : LazyList[real], epsilon : real)->real;
+var
+	a, b : real;
+begin
+	a := terms.head();
+	terms := terms.tail();
+	b := terms.head();
+	while abs(a - b) > epsilon do begin
+		a := b;
+		terms := terms.tail();
+		b := terms.head();
+		end;
+	return b;
+end;
+
+function sqrt (n : real)->real;
+
+	function nextTerm(x : real)->real;
+	begin
+		return (x + n / x) / 2.0;
+	end;
+begin
+	return converge(expansion[real](n, nextTerm), 0.02);
+end;
+
+function cubeRoot (n : real)->real;
+
+	function nextTerm(x : real)->real;
+	begin
+		return (x + n / (x * x)) / 2.0;
+	end;
+begin
+	return converge(expansion[real](n, nextTerm), 0.02);
+end;
+
+function fibFrom (current : integer, next : function(integer)->integer) 
+		->LazyList[integer];
+const
+	nextVal := next(current);
+begin
+	return cons[integer](nextVal, fibFrom(nextVal, current.plus));
+end;
+
+function econs [X : equality] 
+	(hd : X, byName tl : LazyList[X])->LazyList[X];
+begin
+	return LazyList[X](
+		false,
+		function()->X; begin return hd; end,
+		function()->LazyList[X]; begin return tl; end,
+		true, true);
+end;
+
+function merge[X : ordered] (first, second : LazyList[X])->LazyList[X];
+begin
+	if first.empty() then
+		return second;
+	if second.empty() then
+		return first;
+
+	while first.head() = second.head() do begin
+		first := first.tail();
+		if first.empty() then
+			return second;
+		end;
+
+	if first.head() < second.head() then
+		return econs[X](first.head(), merge[X](first.tail(), second))
+	else
+		return econs[X](second.head(), merge[X](first, second.tail()));
+end;
+
+var
+	integers : LazyList[integer];
+	evens : LazyList[integer];
+	primes : LazyList[integer];
+	primes2 : LazyList[integer];
+	odds : LazyList[integer];
+	fibs : LazyList[integer];
+
+function hamming(data : LazyList[integer])->LazyList[integer];
+const
+	n := data.head();
+begin
+	return econs[integer](n, 
+		hamming(
+		merge[integer](data.tail(), 
+			econs[integer](2 * n,
+				econs[integer](3 * n,
+					econs[integer](5 * n,
+						emptyList[integer]()))))));
+end;
+
+begin
+{	integers := cons[integer](1, map[integer, integer](1.plus, integers));
+	printFirstN[integer] (integers, 26);
+
+	evens := map[integer, integer](2.times, integers);
+	printFirstN[integer] (evens, 6);
+
+	primes := filter[integer](map[integer, integer](isPrime, integers),
+			0.notEquals);
+	printFirstN[integer](primes, 10);
+
+	primes2 := sieve(integers.tail());
+
+	printFirstN[integer](primes2, 10);
+
+	odds := expansion[integer](1, 2.plus);
+	printFirstN[integer](odds, 10);
+
+	print("sqrt of 101.5 is " + sqrt(101.5) + "\n");
+	print("cuberoot of 126.5 is " + cubeRoot(126.5) + "\n");
+
+	fibs := fibFrom(0, 1.plus);
+	printFirstN[integer](fibs, 5);}
+
+	printFirstN[integer]
+		(hamming(econs[integer](1, emptyList[integer]())), 100);
+end;

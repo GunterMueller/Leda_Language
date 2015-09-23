@@ -1,0 +1,100 @@
+{
+	representation of sets as characteristic functions
+	
+	written by tim budd
+}
+
+include "std.led";
+
+	{ return a new empty set }
+function emptySet [X : equality] ()-> function(X)->boolean;
+begin
+	return function (v : X)->boolean;
+		begin
+			return false;
+		end;
+end;
+
+	{ see if element is contained in set characterized by function }
+function setIncludes [X : equality]
+	(theFun : function(X)->boolean, value : X) -> boolean;
+begin
+		{ else return the characteristic function value }
+	return theFun(value);
+end;
+
+	{ return characteristic function for set containing new element }
+function setAdd [X : equality]
+	(theFun : function(X)->boolean, addedValue : X)->function(X)->boolean;
+begin
+		{ if already in the set then do not add again }
+	if theFun(addedValue) then
+		return theFun;
+
+		{ return a new characteristic function }
+	return function(newVal : X)->boolean;
+		begin
+				{ if it is the new element it is in set }
+			if (newVal = addedValue) then
+				return true;
+				{ otherwise if it is in old set it is in set}
+			return theFun(newVal);
+		end;
+end;
+
+	{ return characteristic function represent union of two sets }
+function setUnion [X : equality]
+	(firstSet, secondSet : function(X)->boolean)->function(X)->boolean;
+begin
+	return function(newVal : X)->boolean;
+	begin
+			{ true if either in first or second }
+		return firstSet(newVal) | secondSet(newVal);
+	end;
+end;
+
+{
+	------------ test program follows ----------------
+}
+
+type
+	strSet : function(string)->boolean;
+
+var
+	animals : array[string];
+	barkingAnimals : strSet;
+	zooAnimals : strSet;
+	thirdSet : strSet;
+	name : string;
+
+begin
+	animals := ["cat", "dog", "seal", "lion", "horse"];
+
+	barkingAnimals := setAdd[string](
+		setAdd[string](emptySet[string](), "dog"), "seal");
+
+	zooAnimals := setAdd[string](
+		setAdd[string](emptySet[string](), "seal"), "lion");
+
+	for animals.items(name) do begin
+		print("a ");
+		print(name);
+		if zooAnimals(name) then
+			print(" is a zoo animal")
+		else
+			print(" is a non-zoo animal");
+		if barkingAnimals(name) then
+			print(" that barks\n")
+		else
+			print(" that does not bark\n");
+	end;
+
+	thirdSet := setUnion[string](zooAnimals, barkingAnimals);
+	print("union of barking animals and zoo animals is: ");
+	for animals.items(name) do 
+		if thirdSet(name) then begin
+			print(name);
+			print(" ");
+			end;
+	print("\n");
+end;

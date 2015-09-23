@@ -1,0 +1,39 @@
+{
+	timeings of hash tables versus lists
+}
+
+include "std.led";
+include "olist.led";
+include "ftree.led";
+include "random.led";
+
+const
+	rand := Random(234);
+	SIZE := 200;
+
+var
+	theTable : Tree[integer];
+	i : integer;
+	in, out : integer;
+
+begin
+	theTable := Tree[integer]();
+	in := 0;
+	out := 0;
+
+		{ first put 500 random elements into table }
+	for i := 1 to SIZE do 
+		theTable := theTable.add(rand.between(1, 1000));
+
+		{ now test the table 10000 times }
+	for i := 1 to SIZE do
+		if theTable.includes(rand.between(1, 1000)) then
+			in := in + 1
+		else
+			out := out + 1;
+
+	print("found " + in + " elements, did not find " + out + "\n");
+end;
+
+
+

@@ -1,0 +1,226 @@
+{
+	pattern matching primitives
+}
+
+class Pattern;
+var
+	matchFrom : function (integer, string, byRef integer)->relation;
+
+	function matchLocation 
+		(text : string, byRef startPos, endPos : integer)->relation;
+	const
+		max := text.length();
+	begin
+			{ match and return starting and ending position }
+		return integerRange(0, max-1, 1, startPos)
+			& matchFrom(startPos, text, endPos);
+	end;
+
+	function matchText (text : string, byRef matched : string)->relation;
+	var
+		startPos, endPos : integer;
+	begin
+			{ match and return matched substring}
+		return matchLocation(text, startPos, endPos) 
+			& matched <- text.subString(startPos, endPos-startPos);
+	end;
+
+	function matchReplace 
+		(byRef text : string, replacement : string)->relation;
+	var
+		startPos, endPos : integer;
+	begin
+		return matchLocation(text, startPos, endPos)
+			& text <- text.subString(0, startPos)
+				+ replacement 
+				+ text.subString(endPos, 
+					text.length()-endPos);
+	end;
+
+	function match (text : string)->relation;
+	var
+		startPos, endPos : integer;
+	begin
+			{ just match, don't care about result}
+		return matchLocation(text, startPos, endPos);
+	end;
+	
+end;
+
+const Any :=
+	Pattern(function (start : integer, text : string,
+			byRef endPos : integer)->relation;
+		begin
+			{ as long as there is at least one character }
+			{ we can match it }
+			if start < text.length() then begin
+				endPos := start + 1;
+				return true;
+				end;
+			return false;
+		end);
+
+function Arb(subPattern : Pattern)->Pattern;
+
+	function matchFrom(start : integer, text : string,
+			byRef endPos : integer)->relation;
+	var
+		inend : integer;
+	begin
+		return subPattern.matchFrom(start, text, inend) &
+			start < inend & matchFrom(inend, text, endPos)
+		| endPos <- start { match nothing };
+		end;
+begin
+	return Pattern(matchFrom);
+end;
+
+function Break(stops : string)->Pattern;
+begin
+	return Pattern(
+		function (start : integer, text : string,
+			byRef endPos : integer)->relation;
+		const
+			max := text.length();
+		begin
+				{ first find the longest possible string }
+			endPos := start;
+			while endPos < max & 
+				~ defined(stops.index(text.subString(endPos,1))) do
+				{stops.index(text.subString(endPos, 1)) < 0 do}
+					endPos := endPos + 1;
+				{ succeed if we didn't run off end }
+			return endPos < max;
+		end);
+end;
+
+function Char(possibilities : string)->Pattern;
+begin
+	return Pattern(
+		function (start : integer, text : string,
+			byRef endPos : integer)->relation;
+	begin
+		return start < text.length()
+			& defined(possibilities.index(text.subString(start, 1)))
+			{& possibilities.index(text.subString(start, 1)) >= 0}
+			& endPos <- start + 1;
+	end);
+end;
+
+function Span(skips : string)->Pattern;
+
+	function matchFrom (start : integer, text : string,
+			byRef endPos : integer)->relation;
+	const
+		char := Char(skips);
+	var
+		intend : integer;
+	begin
+		return char.matchFrom(start, text, intend) &
+			matchFrom(intend, text, endPos)
+			| endPos <- start;
+	end;
+begin
+	return Pattern(matchFrom);
+end;
+
+function Position(location : integer)->Pattern;
+begin
+	return Pattern(
+		function (start : integer, text : string,
+			byRef endPos : integer)->relation;
+	begin
+		if start = location then
+			return endPos <- start + 1
+		else
+			return false;
+	end);
+end;
+
+function Match(patternText : string)->Pattern;
+begin
+	return Pattern(
+		function (start : integer, text : string,
+			byRef endPos : integer)->relation;
+	const
+		textLen := patternText.length();
+	begin
+		return patternText = text.subString(start, textLen)
+			& endPos <- start + textLen;
+	end);
+end;
+
+function Len(size : integer)->Pattern;
+begin
+	return Pattern(
+		function (start : integer, text : string,
+			byRef endPos : integer)->relation;
+		begin
+			endPos := start + size;
+			return endPos <= text.length();
+		end);
+end;
+
+function Same (pat : Pattern, patternText : string)->Pattern;
+begin
+	return Pattern(
+		function (start : integer, text : string,
+			byRef endPos : integer)->relation;
+		begin
+			return pat.matchFrom(start, text, endPos) &
+				patternText = text.subString(start, endPos - start);
+		end);
+end;
+
+function assign(aPattern : Pattern, byRef target : string)->Pattern;
+begin
+	return Pattern(
+		function (start : integer, text : string,
+			byRef endPos : integer)->relation;
+		begin
+			return aPattern.matchFrom(start, text, endPos) &
+				target <- text.subString(start, endPos-start);
+		end);
+end;
+
+function plus(firstPattern, secondPattern : Pattern)->Pattern;
+begin
+	return Pattern(
+		function (start : integer, text : string,
+			byRef endPos : integer)->relation;
+		var
+			intEnd : integer;
+		begin
+			return firstPattern.matchFrom(start, text, intEnd)
+				& secondPattern.matchFrom(intEnd, text, endPos);
+		end);
+end;
+
+function times (pat : Pattern, number : integer)->Pattern;
+begin
+	if number > 1 then 
+		return (pat * (number - 1)) + pat
+	else
+		return pat;
+end;
+
+function or (firstPattern, secondPattern : Pattern)->Pattern;
+begin
+	return Pattern(
+		function (start : integer, text : string,
+			byRef endPos : integer)->relation;
+		begin
+			return firstPattern.matchFrom(start, text, endPos)
+				| secondPattern.matchFrom(start, text, endPos);
+		end);
+end;
+
+function Delay (byName pat : Pattern)->Pattern;
+begin
+	return Pattern(
+		function (start : integer, text : string,
+			byRef endPos : integer)->relation;
+		begin
+			return pat.matchFrom(start, text, endPos);
+		end);
+end;

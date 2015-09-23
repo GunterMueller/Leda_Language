@@ -1,0 +1,66 @@
+{
+	simple random number generator
+	
+	written by tim budd
+}
+
+class Random;
+var
+	seed : integer;
+
+	function randomInteger()->integer;
+	const
+		multiplier := 15625;
+		adder := 22221;
+	begin
+		if ~ defined(seed) then
+			seed := 44449;
+
+		seed := multiplier * seed + adder;
+		if (seed < 0) then
+			seed := - seed;
+
+		return seed % 65536;
+	end;
+
+	function randomReal()->real;
+	begin
+			{ return random real between 0 and 1 }
+			{ divide by 2^16 = 1 }
+		return (randomInteger() % 65536 )/ 65535.0;
+	end;
+
+	function betweenReal(low, high : real)->real;
+	begin
+			{ yield random value between low and high }
+		return low + (high - low) * randomReal();
+	end;
+
+	function between(low : integer, high : integer)->integer;
+	const
+		rreal := betweenReal(low.asReal(), high + 1.0);
+	begin
+		return rreal.asInteger();
+	end;
+
+	function weighted(weights : array[integer])->integer;
+	var
+		sum : integer;
+		val : integer;
+		i : integer;
+	begin
+		sum := 0;
+		for weights.items(val) do
+			sum := sum + val;
+		val := between(1, sum);
+		i := 1;
+		while (i <= weights.size()) do begin
+			if val.less(weights.at(i)) then
+				return i
+			else 
+				val := val - weights.at(i);
+			i := i + 1;
+		end;
+		return i;
+	end;
+end;

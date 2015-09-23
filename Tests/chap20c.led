@@ -1,0 +1,54 @@
+{
+	test of integer ranges
+}
+
+include "std.led";
+
+class Range;
+var
+	low : integer;
+	high : integer;
+
+	function asString()->string;
+	begin
+		return " " + low + ".." + high;
+	end;
+end;
+
+function union (byRef result : Range, x, y : Range)->relation;
+begin
+		{ either match result with x or with y }
+	return result <- x | result <- y ;
+end;
+
+function intersect (byRef result : Range, x, y : Range)->relation;
+var 
+	newlow, newhigh : integer;
+begin		
+		{ form new range holding values in both arguments }
+	newlow := x.low;
+	if y.low > newlow then
+		newlow := y.low;
+	newhigh := x.high;
+	if y.high < newhigh then
+		newhigh := y.high;
+		{ form new range, if possible }
+	return (newlow <= newhigh) & result <- Range(newlow, newhigh);
+end;
+
+var x : Range;
+
+begin
+
+	if 
+		union(x, Range(0, 24), Range(51,120))
+		& intersect(x, x, Range(21,120))
+		& intersect(x, x, Range(42,120))
+		& intersect(x, x, Range(16,55))
+	then begin
+		print("solution "); print(x); print("\n");
+		end
+	else
+		print("no solution");
+end;
+

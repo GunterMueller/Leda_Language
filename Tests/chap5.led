@@ -1,0 +1,134 @@
+{
+	styles of iteration
+	for new iteration chapter
+}
+
+include "std.led";
+include "olist.led";
+
+class ListIterator[T : equality];
+var
+	finger : Link[T];
+
+	function init(aList : List[T]);
+	begin
+		finger := aList.data; 
+	end;
+
+	function atEnd()->boolean;
+	begin
+		return ~ defined(finger);
+	end;
+
+	function current()->T;
+	begin
+		if defined(finger) then
+			return finger.datum;
+		return NIL;
+	end;
+
+	function increment();
+	begin
+		if defined(finger) then
+			finger := finger.next;
+	end;
+end;
+
+var
+	languages : List[string];
+	p : Link[string];
+	name : string;
+	listItr : ListIterator[string];
+	gen : function()->string;
+begin
+	{ first make a list }
+	languages := List[string]() + "Alphard" + "Beta" + "Clos" + "Dylan" 
+		+ "Eiffel";
+
+	print("style one -- brute force\n");
+	p := languages.data;
+	while defined(p) do begin
+		print(p.datum);
+		print(" ");
+		p := p.next;
+	end;
+	print("\n\n");
+
+	print("style two -- using functions as arguments\n");
+	languages.onEach(function (x : string);
+		begin
+			print(x); print(" ");
+		end);
+	print("\n\n");
+
+	print("style three -- using relations\n");
+	for languages.items(name) do begin
+		print(name);
+		print(" ");
+		end;
+	print("\n\n");
+
+	print("style four -- using iterators\n");
+	listItr := ListIterator[string]();
+	listItr.init(languages);
+	while ~ listItr.atEnd() do begin
+		print(listItr.current());
+		print(" ");
+		listItr.increment();
+	end;
+	print("\n\n");
+
+	print("style five -- using generator\n");
+	gen := languages.generator();
+	name := gen();
+	while defined(name) do begin
+		print(name);
+		print(" ");
+		name := gen();
+		end;
+	print("\n\n");
+
+	print("style one with halting\n");
+	p := languages.data;
+	while defined(p) & p.datum < "C" do begin
+		print(p.datum);
+		print(" ");
+		p := p.next;
+	end;
+	print("\n\n");
+
+	print("style two -- using functions as arguments\n");
+	languages.onEach(function (x : string);
+		begin
+			print(x); print(" ");
+		end);
+	print("\n\n");
+
+	print("style three -- using relations\n");
+	for languages.items(name) to name >= "C" do begin
+		print(name);
+		print(" ");
+		end;
+	print("\n\n");
+
+	print("style four -- using iterators\n");
+	listItr := ListIterator[string]();
+	listItr.init(languages);
+	while ~ listItr.atEnd() & listItr.current() < "C" do begin
+		print(listItr.current());
+		print(" ");
+		listItr.increment();
+	end;
+	print("\n\n");
+
+	print("style five -- using generator\n");
+	gen := languages.generator();
+	name := gen();
+	while defined(name) & name < "C" do begin
+		print(name);
+		print(" ");
+		name := gen();
+		end;
+	print("\n\n");
+end;
+
