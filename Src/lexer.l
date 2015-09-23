@@ -4,108 +4,138 @@
 */
 
 int     linenumber = 1;
-char *      fileName = "no file";
+char*   fileName = "no file";
 
-static int input (void );
+static int input(void);
 
 struct inputSources
 {
-    FILE * fd;
-    struct inputSources * next;
-    int linesave;
-    char * filenamesave;
+    YY_BUFFER_STATE buff;
+    struct inputSources* next;
+    int lineSave;
+    char* fileNameSave;
 };
 
 struct inputSources * inputSource = 0;
 
 void openInputFile(char * name)
 {
-    struct inputSources * p;
-    p = (struct inputSources *) malloc(sizeof(struct inputSources));
+    struct inputSources *p;
+    p = (struct inputSources*) malloc(sizeof(struct inputSources));
+
     if (p == 0)
+    {
         yyerror("out of memory");
-    p->linesave = linenumber;
-    p->filenamesave = fileName;
+    }
+
+    p->lineSave = linenumber;
+    p->fileNameSave = fileName;
     p->next = inputSource;
-    p->fd = fopen(name, "r");
-    if (p->fd != NULL) {
+
+    FILE *fd = fopen(name, "r");
+    if (fd != NULL)
+    {
         inputSource = p;
+        p->buff = yy_create_buffer(fd, YY_BUF_SIZE);
+
         linenumber = 1;
         fileName = name;
-        }
+    }
     else
+    {
         yyserror("cannot open input file named %s", name);
-    yyin = inputSource->fd;
+    }
+
+    yy_switch_to_buffer(p->buff);
 }
 
 
-int yywrap()
+int yywrap(void)
 {
-    /* should execution continue? */
-    if (inputSource == 0)
-        return 1;
-    linenumber = inputSource->linesave;
-    fileName = inputSource->filenamesave;
-    inputSource = inputSource->next;
-    if (inputSource == 0)
-        return 1;
-    yyin = inputSource->fd;
+    yy_delete_buffer(YY_CURRENT_BUFFER);
+
+    // Should execution continue?
+    if (inputSource == 0) return 1;
+
+    linenumber = inputSource->lineSave;
+    fileName = inputSource->fileNameSave;
+
+    struct inputSources *next = inputSource->next;
+    free(inputSource);
+    inputSource = next;
+
+    if (inputSource == 0) return 1;
+
+    yy_switch_to_buffer(inputSource->buff);
+
     return 0;
 }
 
-/*
-    this is a silly hack to save space until we get real garbage
-    collection -- intended to ensure we have only one copy of
-    any string
-*/
-static char * strTable[1000];
+
+// This is a silly hack to save space until we get real garbage collection --
+// intended to ensure we have only one copy of any string
+static char* strTable[1000];
 static int strTop = 0;
 
-char * newString(char * c)
+char* newString(char * c)
 {
     int i;
-    char * p;
+    char* p;
 
-    for (i = 0; i < strTop; i++)
+    for (i=0; i<strTop; i++)
+    {
         if (strcmp(c, strTable[i]) == 0)
+        {
             return strTable[i];
+        }
+    }
 
-    /* not found, make a new copy */
+    // Not found, make a new copy
     p = (char *) malloc(strlen(c) + 1);
     if (p == 0)
+    {
         yyerror("out of memory for string");
+    }
     strcpy(p, c);
     strTable[strTop++] = p;
     if (strTop >= 1000)
+    {
         yyerror("too many strings");
-    /*printf("created new string %s\n", c);*/
+    }
+
+    #ifdef DEBUG
+        printf("created new string %s\n", c);
+    #endif
+
     return p;
 }
 
-char * newTextString(char * c)
+char* newTextString(char* c)
 {
-    char * p = c;
-    char * q;
-    char * buffer;
+    char* p = c;
+    char* q;
+    char* buffer;
 
-        /* skip leading quote mark */
+    // Skip leading quote mark
     if (p) p++;
 
-        /* remove ending quote mark */
+    // Remove ending quote mark
     p[strlen(p)-1] = '\0';
 
-        /* make new string */
+    // Make new string
     return newString(p);
 }
 
-char * readLiteralString()
+char* readLiteralString()
 {
     char buffer[256];
-    char * p = buffer;
+    char* p = buffer;
     int c;
 
-    while (c = input()) {
-        switch(c) {
+    while (c = input())
+    {
+        switch(c)
+        {
             case '\"': *p = '\0';
                 return newString(buffer);
 
@@ -113,11 +143,12 @@ char * readLiteralString()
                 yyerror("unterminated literal string");
 
             case '\\':
-                switch(c = input()) {
+                switch(c = input())
+                {
                     case 'n': c = '\n'; break;
                     case 't': c = '\t'; break;
                     case 'b': c = '\b'; break;
-                    /* default drops into next case */
+                    // default drops into next case
                 }
 
             default:
@@ -130,80 +161,89 @@ char * readLiteralString()
 static void skipComment()
 {
     while(1)
-        switch(input()) {
+    {
+        switch(input())
+        {
             case EOF: yyerror("unexpected eof in comment");
             case '\n': linenumber++; break;
             case '{': yyerror("nested comment");
             case '}': return;
-            }
+        }
+    }
 }
 
-# define lexreturn(x) /*printf("token %s:%s\n", yytext, #x);*/ return(x)
+#ifdef DEBUG
+    #define lexReturn(x) printf("token %s:%s\n", yytext, #x); return(x)
+#else
+    #define lexReturn(x) return(x)
+#endif
 
 %}
 
 letter      [A-Za-z\_]
 digit       [0-9]
-id      {letter}({letter}|{digit})*
+id          {letter}({letter}|{digit})*
 number      {digit}+(\.{digit}+)?(E[+\-]?{digit}+)?
 
 %%
 
-\n      linenumber++;
-[ \t]+  /* white space, do nothing */;
-"{"     {skipComment(); /* do nothing */ }
-\"      {yylval.c = readLiteralString(); lexreturn(SCONSTANT);}
-"begin"     {lexreturn(BEGINkw);}
-"byName"    {lexreturn(BYNAME);}
-"byRef"     {lexreturn(BYREF);}
-"cfunction" {lexreturn(CFUNCTIONkw);}
-"class"     {lexreturn(CLASSkw);}
-"const"     {lexreturn(CONSTkw);}
-"defined"   {lexreturn(DEFINEDkw);}
-"do"        {lexreturn(DOkw);}
-"else"      {lexreturn(ELSEkw);}
-"end"       {lexreturn(ENDkw);}
-"for"       {yylval.i = linenumber; lexreturn(FORkw);}
-"function"  {lexreturn(FUNCTIONkw);}
-"if"        {yylval.i = linenumber; lexreturn(IFkw);}
-"include"   {lexreturn(INCLUDEkw);}
-"is"        {lexreturn(ISkw);}
-"of"        {lexreturn(OFkw);}
-"return"    {yylval.i = linenumber; lexreturn(RETURNkw);}
-"then"      {lexreturn(THENkw);}
-"to"        {lexreturn(TOkw);}
-"type"      {lexreturn(TYPEkw);}
-"var"       {lexreturn(VARkw);}
-"while"     {yylval.i = linenumber; lexreturn(WHILEkw);}
-{id}        {yylval.c = newString(yytext); lexreturn(ID);}
-{digit}+    {yylval.i = atoi(yytext); lexreturn(ICONSTANT);}
-{digit}+"."{digit}+ {yylval.r = atof(yytext); lexreturn(RCONSTANT);}
-":"     {lexreturn(COLON);}
-";"     {lexreturn(SEMI);}
-"."     {lexreturn(PERIOD);}
-":="        {lexreturn(ASSIGN);}
-","     {lexreturn(COMMA);}
-"->"        {lexreturn(ARROW);}
-"<-"        {lexreturn(LEFTARROW);}
-"<"     {yylval.c = "less"; lexreturn(RELATIONALOP);}
-"<="        {yylval.c = "lessEqual"; lexreturn(RELATIONALOP);}
-">"     {yylval.c = "greater"; lexreturn(RELATIONALOP);}
-">="        {yylval.c = "greaterEqual"; lexreturn(RELATIONALOP);}
-"["     {lexreturn(LEFTBRACK);}
-"]"     {lexreturn(RIGHTBRACK);}
-"("     {lexreturn(LEFTPAREN);}
-")"     {lexreturn(RIGHTPAREN);}
-"="     {yylval.c = "equals"; lexreturn(RELATIONALOP);}
-"<>"        {yylval.c = "notEquals"; lexreturn(RELATIONALOP);}
-"=="        {yylval.c = "sameAs"; lexreturn(RELATIONALOP);}
-"~="        {yylval.c = "notSameAs"; lexreturn(RELATIONALOP);}
-"+"     {yylval.c = "plus"; lexreturn(PLUSop);}
-"-"     {yylval.c = "minus"; lexreturn(MINUSop);}
-"*"     {yylval.c = "times"; lexreturn(TIMESop);}
-"/"     {yylval.c = "divide"; lexreturn(TIMESop);}
-"%"     {yylval.c = "remainder"; lexreturn(TIMESop);}
-"~"     {lexreturn(NOT);}
-"&"     {yylval.c = "and"; lexreturn(ANDop);}
-"|"     {yylval.c = "or"; lexreturn(ORop);}
-.       {fprintf(stderr,"character %c %d\n", yytext[0], yytext[0]);
-            yyerror("unknown character"); }
+\n          linenumber++;
+[ \t]+      /* white space, do nothing */;
+"{"         {skipComment(); /* do nothing */ }
+\"          {yylval.c = readLiteralString(); lexReturn(SCONSTANT);}
+"begin"     {lexReturn(BEGINkw);}
+"byName"    {lexReturn(BYNAME);}
+"byRef"     {lexReturn(BYREF);}
+"cfunction" {lexReturn(CFUNCTIONkw);}
+"class"     {lexReturn(CLASSkw);}
+"const"     {lexReturn(CONSTkw);}
+"defined"   {lexReturn(DEFINEDkw);}
+"do"        {lexReturn(DOkw);}
+"else"      {lexReturn(ELSEkw);}
+"end"       {lexReturn(ENDkw);}
+"for"       {yylval.i = linenumber; lexReturn(FORkw);}
+"function"  {lexReturn(FUNCTIONkw);}
+"if"        {yylval.i = linenumber; lexReturn(IFkw);}
+"include"   {lexReturn(INCLUDEkw);}
+"is"        {lexReturn(ISkw);}
+"of"        {lexReturn(OFkw);}
+"return"    {yylval.i = linenumber; lexReturn(RETURNkw);}
+"then"      {lexReturn(THENkw);}
+"to"        {lexReturn(TOkw);}
+"type"      {lexReturn(TYPEkw);}
+"var"       {lexReturn(VARkw);}
+"while"     {yylval.i = linenumber; lexReturn(WHILEkw);}
+{id}        {yylval.c = newString(yytext); lexReturn(ID);}
+{digit}+    {yylval.i = atoi(yytext); lexReturn(ICONSTANT);}
+{digit}+"."{digit}+ {yylval.r = atof(yytext); lexReturn(RCONSTANT);}
+":"         {lexReturn(COLON);}
+";"         {lexReturn(SEMI);}
+"."         {lexReturn(PERIOD);}
+":="        {lexReturn(ASSIGN);}
+","         {lexReturn(COMMA);}
+"->"        {lexReturn(ARROW);}
+"<-"        {lexReturn(LEFTARROW);}
+"<"         {yylval.c = "less"; lexReturn(RELATIONALOP);}
+"<="        {yylval.c = "lessEqual"; lexReturn(RELATIONALOP);}
+">"         {yylval.c = "greater"; lexReturn(RELATIONALOP);}
+">="        {yylval.c = "greaterEqual"; lexReturn(RELATIONALOP);}
+"["         {lexReturn(LEFTBRACK);}
+"]"         {lexReturn(RIGHTBRACK);}
+"("         {lexReturn(LEFTPAREN);}
+")"         {lexReturn(RIGHTPAREN);}
+"="         {yylval.c = "equals"; lexReturn(RELATIONALOP);}
+"<>"        {yylval.c = "notEquals"; lexReturn(RELATIONALOP);}
+"=="        {yylval.c = "sameAs"; lexReturn(RELATIONALOP);}
+"~="        {yylval.c = "notSameAs"; lexReturn(RELATIONALOP);}
+"+"         {yylval.c = "plus"; lexReturn(PLUSop);}
+"-"         {yylval.c = "minus"; lexReturn(MINUSop);}
+"*"         {yylval.c = "times"; lexReturn(TIMESop);}
+"/"         {yylval.c = "divide"; lexReturn(TIMESop);}
+"%"         {yylval.c = "remainder"; lexReturn(TIMESop);}
+"~"         {lexReturn(NOT);}
+"&"         {yylval.c = "and"; lexReturn(ANDop);}
+"|"         {yylval.c = "or"; lexReturn(ORop);}
+.           {
+                fprintf(stderr,"character %c %d\n", yytext[0], yytext[0]);
+                yyerror("unknown character");
+            }
