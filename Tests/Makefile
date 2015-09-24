@@ -1,40 +1,46 @@
 # regression testing after changes
-# require large memory chap15a,c,d
-# chap21 doesn't halt??
-# missing, chap6c
-regression: lc
-	lc chap2a.led
-	lc chap2b.led
-	lc chap2c.led
-	lc chap2d.led
-	lc chap2e.led
-	lc chap2f.led
-	lc chap3.led
-	lc chap4a.led
-	lc chap4b.led
-	lc chap4c.led
-	lc chap5.led
-	lc chap6a.led
-	lc chap6b.led
-	lc chap6d.led
-	lc chap6e.led
-	lc chap6f.led
-	lc chap7a.led
-	lc chap7b.led
-	lc chap7c.led
-	lc chap7d.led
-	lc chap8a.led
-	lc chap8c.led <concordanceInput
-	lc chap9.led
-	lc chap11.led
-	lc chap14.led
-	lc chap15b.led
-	lc chap16.led
-	lc chap17.led <chap17input
-	lc chap19a.led
-	lc chap19b.led
-	lc chap19c.led
-	lc chap20a.led
-	lc chap20b.led
-	lc chap20c.led
-	lc chap20d.led
+# missing, chap6c which seg-faults
+
+LC = ../Src/lc
+
+regression: $(LC)
+	@$(LC) chap2a.led > log
+	@$(LC) chap2b.led >> log
+	@$(LC) chap2c.led >> log
+	@$(LC) chap2d.led >> log
+	@$(LC) chap2e.led >> log
+	@$(LC) chap2f.led >> log
+	@$(LC) chap3.led >> log
+	@$(LC) chap4a.led >> log
+	@$(LC) chap4b.led >> log
+	@$(LC) chap4c.led >> log
+	@$(LC) chap5.led >> log
+	@$(LC) chap6a.led >> log
+	@$(LC) chap6b.led >> log
+	@$(LC) chap6d.led >> log
+	@$(LC) chap6e.led >> log
+	@$(LC) chap6f.led >> log
+	@$(LC) chap7a.led >> log
+	@$(LC) chap7b.led >> log
+	@$(LC) chap7c.led >> log
+	@$(LC) chap7d.led >> log
+	@$(LC) chap8a.led >> log
+	@$(LC) chap8c.led < concordanceInput >> log
+	@$(LC) chap9.led >> log
+	@$(LC) chap11.led >> log
+	@$(LC) chap14.led >> log
+	@$(LC) chap15a.led >> log
+	@$(LC) chap15b.led >> log
+	@$(LC) chap15c.led >> log
+	@$(LC) chap15d.led >> log
+	@$(LC) chap16.led >> log
+	@$(LC) chap17.led < chap17input >> log
+	@$(LC) chap19a.led >> log
+	@$(LC) chap19b.led >> log
+	@$(LC) chap19c.led >> log
+	@$(LC) chap20a.led >> log
+	@$(LC) chap20b.led >> log
+	@$(LC) chap20c.led >> log
+	@$(LC) -m 500000 chap20d.led >> log
+	@$(LC) chap21.led >> log
+	@diff ref log
