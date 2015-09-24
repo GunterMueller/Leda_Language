@@ -18,46 +18,42 @@
   which is not ever garbage collected.
   The only pointer from static memory back to dynamic memory is
   the global context.
-
 */
 
-struct ledaValue {
+int yyerror(char* s);
+
+struct ledaValue
+{
     int size;
-    struct ledaValue * data [0];
+    struct ledaValue* data[0];
 };
 
-/*
-  memoryBase holds the pointer to the current space,
-  memoryPointer is the pointer into this space.
-  To allocate, decrement memoryPointer by the correct amount.
-  If the result is less than memoryBase, then garbage collection
-  must take place
+// memoryBase holds the pointer to the current space,
+// memoryPointer is the pointer into this space.
+// To allocate, decrement memoryPointer by the correct amount.
+// If the result is less than memoryBase, then garbage collection
+// must take place
 
-*/
+extern struct ledaValue* memoryPointer;
+extern struct ledaValue* memoryBase;
 
-extern struct ledaValue * memoryPointer;
-extern struct ledaValue * memoryBase;
-
-/*
-  roots for the memory space
-  these are traced down during memory management
-*/
+///  Roots for the memory space
+// These are traced down during memory management
 # define ROOTSTACKLIMIT 250
-extern struct ledaValue * rootStack[];
+extern struct ledaValue* rootStack[];
 extern int rootTop;
-extern struct ledaValue * globalContext;
-extern struct ledaValue * currentContext;
+extern struct ledaValue* globalContext;
+extern struct ledaValue* currentContext;
 
-/*
-  entry points
-*/
+///  entry points
 
 void gcinit(int, int);
-struct ledaValue * gcollect(int);
-struct ledaValue * staticAllocate(int);
+struct ledaValue* gcollect(int);
+struct ledaValue* staticAllocate(int);
 
-# define gxcalloc(sz) (((memoryPointer-=(sz+1))<memoryBase)?                   \
-    gcollect(sz):(memoryPointer->size=sz<<2,memoryPointer))
+# define gcalloc(sz) (((memoryPointer-=((sz)+2))<memoryBase)?                  \
+    gcollect(sz):(memoryPointer->size=(sz)<<2,memoryPointer))
+
 # ifndef gcalloc
-extern struct ledaValue * gcalloc(int);
+    extern struct ledaValue* gcalloc(int);
 # endif

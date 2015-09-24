@@ -2,17 +2,16 @@
   data fields used by the Leda interpreter
 */
 
-extern struct typeRecord * booleanType;
-extern struct typeRecord * integerType;
-extern struct typeRecord * stringType;
-extern struct typeRecord * trueType;
-extern struct typeRecord * falseType;
+extern struct typeRecord* booleanType;
+extern struct typeRecord* integerType;
+extern struct typeRecord* stringType;
+extern struct typeRecord* trueType;
+extern struct typeRecord* falseType;
 
-/*
-  Statements =============================
-*/
+///  Statements
 
-enum statements {
+enum statements
+{
     makeLocalsStatement,
     expressionStatement,
     returnStatement,
@@ -21,65 +20,88 @@ enum statements {
     tailCall,
 };
 
-struct statementRecord {
-    char * fileName;
+struct statementRecord
+{
+    char* fileName;
     int lineNumber;
     enum statements statementType;
-    struct statementRecord * next;
+    struct statementRecord* next;
 
-    union {
-        struct {    /* if-then conditional */
-            struct expressionRecord * expr;
-            struct statementRecord * falsePart;
+    union
+    {
+        struct     // if-then conditional
+        {
+            struct expressionRecord* expr;
+            struct statementRecord* falsePart;
         } c;
-        struct {    /* procedure call, return */
-            struct expressionRecord * e;
+        struct     // procedure call, return
+        {
+            struct expressionRecord* e;
         } r;
-        struct {    /* make locals */
+        struct      // make locals
+        {
             int size;
         } k;
     } u;
 };
 
-struct statementRecord * newStatement(enum statements);
+struct statementRecord* newStatement(enum statements);
 
-struct statementRecord * genAssignmentStatement(
-    struct expressionRecord *, struct expressionRecord *);
+struct statementRecord* genAssignmentStatement
+(
+    struct expressionRecord*,
+    struct expressionRecord*
+);
 
-struct statementRecord * genReturnStatement(
-    struct symbolTableRecord *, struct expressionRecord *);
+struct statementRecord* genReturnStatement
+(
+    struct symbolTableRecord*,
+    struct expressionRecord*
+);
 
-struct statementRecord * genConditionalStatement( int,
-struct expressionRecord *,
-struct statementRecord *,
-struct statementRecord *,
-struct statementRecord *,
-struct statementRecord *,
-struct statementRecord *);
+struct statementRecord* genConditionalStatement
+(
+    int,
+    struct expressionRecord*,
+    struct statementRecord*,
+    struct statementRecord*,
+    struct statementRecord*,
+    struct statementRecord*,
+    struct statementRecord*
+);
 
-struct statementRecord * genWhileStatement(int,
-struct expressionRecord *,
-struct statementRecord *,
-struct statementRecord *,
-struct statementRecord *);
+struct statementRecord* genWhileStatement
+(
+    int,
+    struct expressionRecord*,
+    struct statementRecord*,
+    struct statementRecord*,
+    struct statementRecord*
+);
 
-struct statementRecord * generateArithmeticForStatement(int,
-struct symbolTableRecord * syms,
-struct expressionRecord * target,
-struct expressionRecord * start,
-struct expressionRecord * limit,
-struct statementRecord * stFirst,
-struct statementRecord * stLast,
-struct statementRecord * nullState);
+struct statementRecord* generateArithmeticForStatement
+(
+    int,
+    struct symbolTableRecord* syms,
+    struct expressionRecord* target,
+    struct expressionRecord* start,
+    struct expressionRecord* limit,
+    struct statementRecord* stFirst,
+    struct statementRecord* stLast,
+    struct statementRecord* nullState
+);
 
-struct statementRecord * genBody(
-    struct symbolTableRecord *, struct statementRecord *);
+struct statementRecord* genBody
+(
+    struct symbolTableRecord*,
+    struct statementRecord*
+);
 
-/*
-  Expressions =============================
-*/
 
-enum instructions {
+///  Expressions
+
+enum instructions
+{
     getCurrentContext,
     getOffset,
     getGlobalOffset,
@@ -99,139 +121,184 @@ enum instructions {
     patternMatch,
 };
 
-struct expressionRecord {
+struct expressionRecord
+{
     enum instructions operator;
-    struct typeRecord * resultType;
-    union {
-
-        struct {    /* offset, reference, etc */
+    struct typeRecord* resultType;
+    union
+    {
+        struct     // offset, reference, etc
+        {
             int location;
-            struct expressionRecord * base;
-            char * symbol;
+            struct expressionRecord* base;
+            char* symbol;
         } o;
 
-        struct {    /* assignment */
-            struct expressionRecord * left;
-            struct expressionRecord * right;
-            char * symbol;
+        struct     // assignment
+        {
+            struct expressionRecord* left;
+            struct expressionRecord* right;
+            char* symbol;
         } a;
 
-        struct {    /* do special */
+        struct     // do special
+        {
             int index;
-            struct list * args;
+            struct list* args;
         } c;
 
-        struct {    /* make closure */
-            struct expressionRecord * context;
-            struct statementRecord * code;
-            char * functionName;
+        struct      // make closure
+        {
+            struct expressionRecord* context;
+            struct statementRecord* code;
+            char* functionName;
         } l;
 
-        struct {    /* function call */
-            struct expressionRecord * fun;
-            char * symbol;
-            struct list * args;
+        struct      // function call
+        {
+            struct expressionRecord* fun;
+            char* symbol;
+            struct list* args;
         } f;
 
-        struct {    /* genIntegerConstant */
+        struct      // genIntegerConstant
+        {
             int value;
         } i;
 
-        struct {    /* genStringConstant */
-            char * value;
+        struct      // genStringConstant
+        {
+            char* value;
         } s;
 
-        struct {    /* genRealConstant */
+        struct     // genRealConstant
+        {
             double value;
         } r;
 
-        struct {    /* buildInstance */
-            struct expressionRecord * table;
+        struct      // buildInstance
+        {
+            struct expressionRecord* table;
             int size;
-            struct list * args;
+            struct list* args;
         } n;
 
-        struct {    /* pattern match */
-            struct expressionRecord * base;
-            struct expressionRecord * class;
-            struct list * args;
+        struct      // pattern match
+        {
+            struct expressionRecord* base;
+            struct expressionRecord* class;
+            struct list* args;
         } p;
     } u;
-
 };
 
-struct expressionRecord * newExpression(enum instructions);
+struct expressionRecord* newExpression(enum instructions);
 
-extern char * specialFunctionNames[];
+extern char* specialFunctionNames[];
 
-/*
-  code generation
-*/
 
-struct statementRecord * genExpressionStatement(struct expressionRecord * e);
+///  Code generation
 
-struct expressionRecord * lookupIdentifier(struct symbolTableRecord *, char *);
+struct statementRecord* genExpressionStatement(struct expressionRecord* e);
 
-struct expressionRecord * lookupField(
-    struct expressionRecord *, struct typeRecord *, char *);
+struct expressionRecord* lookupIdentifier(struct symbolTableRecord*, char*);
 
-struct expressionRecord * integerConstant(int);
-struct expressionRecord * realConstant(double);
-struct expressionRecord * stringConstant(char *);
+struct expressionRecord* lookupField
+(
+    struct expressionRecord*,
+    struct typeRecord*,
+    char*
+);
 
-struct expressionRecord * generateFunctionCall(
-    struct symbolTableRecord *,
-    struct expressionRecord *,
-    struct list *, int);
+struct expressionRecord* integerConstant(int);
+struct expressionRecord* realConstant(double);
+struct expressionRecord* stringConstant(char*);
 
-struct expressionRecord * generateCFunctionCall(
-    char *, struct list *, struct typeRecord *);
+struct expressionRecord* generateFunctionCall
+(
+    struct symbolTableRecord*,
+    struct expressionRecord*,
+    struct list*,
+    int
+);
 
-struct expressionRecord * generateUnaryOperator(
-    struct symbolTableRecord *,
-    char *, struct expressionRecord *);
+struct expressionRecord* generateCFunctionCall
+(
+    char*,
+    struct list*,
+    struct typeRecord*
+);
 
-struct expressionRecord * generateBinaryOperator(
-    struct symbolTableRecord * syms,
-    char *, struct expressionRecord *, struct expressionRecord *);
+struct expressionRecord* generateUnaryOperator
+(
+    struct symbolTableRecord*,
+    char*,
+    struct expressionRecord*
+);
 
-struct expressionRecord * genAssignment(
-    struct expressionRecord *,
-    struct expressionRecord *);
+struct expressionRecord* generateBinaryOperator
+(
+    struct symbolTableRecord* syms,
+    char*,
+    struct expressionRecord*,
+    struct expressionRecord*
+);
 
-struct expressionRecord * generateLeftArrow(
-    struct symbolTableRecord * syms,
-    struct expressionRecord *, struct expressionRecord *);
+struct expressionRecord* genAssignment
+(
+    struct expressionRecord*,
+    struct expressionRecord*
+);
 
-struct symbolTableRecord * generateFunctionExpression(
-    struct symbolTableRecord *,
-    struct list *, struct typeRecord *);
+struct expressionRecord* generateLeftArrow
+(
+    struct symbolTableRecord* syms,
+    struct expressionRecord*,
+    struct expressionRecord*
+);
 
-struct expressionRecord * relationCheck(
-    struct symbolTableRecord *,
-    struct expressionRecord *);
+struct symbolTableRecord* generateFunctionExpression
+(
+    struct symbolTableRecord*,
+    struct list*,
+    struct typeRecord*
+);
 
-struct expressionRecord * booleanCheck(
-    struct symbolTableRecord *,
-    struct expressionRecord *);
+struct expressionRecord* relationCheck
+(
+    struct symbolTableRecord*,
+    struct expressionRecord*
+);
 
-struct expressionRecord * generateForRelation(
-    struct symbolTableRecord * syms,
-    struct expressionRecord * relExp,
-    struct expressionRecord * stopExp,
-    struct statementRecord * stateFirst,
-    struct statementRecord * stateLast);
+struct expressionRecord* booleanCheck
+(
+    struct symbolTableRecord*,
+    struct expressionRecord*
+);
 
-struct expressionRecord * generateArrayLiteral(
-    struct symbolTableRecord * syms,
-    struct list *);
+struct expressionRecord* generateForRelation
+(
+    struct symbolTableRecord* syms,
+    struct expressionRecord* relExp,
+    struct expressionRecord* stopExp,
+    struct statementRecord* stateFirst,
+    struct statementRecord* stateLast
+);
 
-struct expressionRecord * genPatternMatch(
-    struct symbolTableRecord * syms,
-    struct expressionRecord * base,
-    struct expressionRecord * theclass,
-    struct list * args);
+struct expressionRecord* generateArrayLiteral
+(
+    struct symbolTableRecord* syms,
+    struct list*
+);
 
-void buildClassTable(struct symbolRecord *);
+struct expressionRecord* genPatternMatch
+(
+    struct symbolTableRecord* syms,
+    struct expressionRecord* base,
+    struct expressionRecord* theclass,
+    struct list* args
+);
 
-void beginInterpreter(struct symbolTableRecord *, struct statementRecord *);
+void buildClassTable(struct symbolRecord*);
+
+void beginInterpreter(struct symbolTableRecord*, struct statementRecord*);
