@@ -1,4 +1,4 @@
-CFLAGS = -g -O -m32
+CFLAGS = -std=c99 -D_GNU_SOURCE -Wall -g -O -m32
 CC = gcc-4.8
 
 #
@@ -19,7 +19,7 @@ y.tab.c: gram.y
 	yacc gram.y
 
 lex.yy.c: lexer.l
-	lex lexer.l
+	flex lexer.l
 
 clean:
 	rm -f lex.yy.c y.tab.c *.o lc
