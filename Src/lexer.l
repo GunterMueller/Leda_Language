@@ -1,6 +1,7 @@
 %{
 /*
     lexical analyzer for Leda revision August 26, 1993
+    Updated for flex: 23/8/2015
 */
 
 int     linenumber = 1;
@@ -18,10 +19,11 @@ struct inputSources
 
 struct inputSources * inputSource = 0;
 
+
 void openInputFile(char * name)
 {
-    struct inputSources *p;
-    p = (struct inputSources*) malloc(sizeof(struct inputSources));
+    struct inputSources *p =
+        (struct inputSources*) malloc(sizeof(struct inputSources));
 
     if (p == 0)
     {
@@ -79,10 +81,7 @@ static int strTop = 0;
 
 char* newString(char * c)
 {
-    int i;
-    char* p;
-
-    for (i=0; i<strTop; i++)
+    for (int i=0; i<strTop; i++)
     {
         if (strcmp(c, strTable[i]) == 0)
         {
@@ -91,7 +90,7 @@ char* newString(char * c)
     }
 
     // Not found, make a new copy
-    p = (char *) malloc(strlen(c) + 1);
+    char* p = (char *) malloc(strlen(c) + 1);
     if (p == 0)
     {
         yyerror("out of memory for string");
@@ -110,11 +109,10 @@ char* newString(char * c)
     return p;
 }
 
+
 char* newTextString(char* c)
 {
     char* p = c;
-    char* q;
-    char* buffer;
 
     // Skip leading quote mark
     if (p) p++;
@@ -126,13 +124,14 @@ char* newTextString(char* c)
     return newString(p);
 }
 
+
 char* readLiteralString()
 {
     char buffer[256];
     char* p = buffer;
-    int c;
 
-    while (c = input())
+    int c;
+    while ((c = input()))
     {
         switch(c)
         {
@@ -155,8 +154,12 @@ char* readLiteralString()
                 *p++ = c;
         }
     }
+
     yyerror("unterminated literal string");
+
+    return 0;
 }
+
 
 static void skipComment()
 {
