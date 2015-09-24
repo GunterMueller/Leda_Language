@@ -31,6 +31,8 @@ vgcore*
 # Ignore executable
 lc
 
+log
+
 updateDocs
 
 # end-of-file
