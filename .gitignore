@@ -18,6 +18,7 @@ y.tab.c
 *.so
 
 # Ignore generated doc files
+*.aux
 *.pdf
 
 # Ignore all run logs

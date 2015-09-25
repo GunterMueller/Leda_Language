@@ -1,7 +1,17 @@
-/*
-  leda interpreter
-  revised to use new garbage collection algorithm
-*/
+/// Copyright 1993-2015 Timothy A. Budd
+// -----------------------------------------------------------------------------
+//  This file is part of
+/// ---     Leda: Multiparadigm Programming Language
+// -----------------------------------------------------------------------------
+//
+//  Leda is free software: you can redistribute it and/or modify it under the
+//  terms of the MIT license, see file "COPYING" included in this distribution.
+//
+// -----------------------------------------------------------------------------
+/// Title: Leda interpreter
+///  Description:
+//    revised to use new garbage collection algorithm
+// -----------------------------------------------------------------------------
 
 #include "lc.h"
 #include "interp.h"
@@ -10,7 +20,9 @@
 #include <string.h>
 #include "memory.h"
 
+// -----------------------------------------------------------------------------
 ///  Globals used within the interpreter
+// -----------------------------------------------------------------------------
 
 int displayFunctions = 0;
 int displayStatements = 0;
@@ -29,7 +41,9 @@ extern char*    fileName;
 
 static int doingInitialization = 1;
 
+// -----------------------------------------------------------------------------
 ///  Building initial table
+// -----------------------------------------------------------------------------
 
 void buildClassTable(struct symbolRecord* sym)
 {
@@ -81,7 +95,9 @@ void buildClassTable(struct symbolRecord* sym)
 }
 
 
+// -----------------------------------------------------------------------------
 ///  Evaluate expressions
+// -----------------------------------------------------------------------------
 
 char* specialFunctionNames[] =
 {
@@ -1028,7 +1044,9 @@ static struct ledaValue* evaluateExpression
 }
 
 
+// -----------------------------------------------------------------------------
 ///  Evaluate statements
+// -----------------------------------------------------------------------------
 
 static struct ledaValue* evaluateStatement
 (
@@ -1430,3 +1448,6 @@ void beginInterpreter
 
     printf("\nexecution ended normally\n");
 }
+
+
+// -----------------------------------------------------------------------------

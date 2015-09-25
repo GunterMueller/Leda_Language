@@ -1,7 +1,15 @@
-/*
-  types.c -- routines having to do with type record
-  for the leda compiler
-*/
+/// Copyright 1993-2015 Timothy A. Budd
+// -----------------------------------------------------------------------------
+//  This file is part of
+/// ---     Leda: Multiparadigm Programming Language
+// -----------------------------------------------------------------------------
+//
+//  Leda is free software: you can redistribute it and/or modify it under the
+//  terms of the MIT license, see file "COPYING" included in this distribution.
+//
+// -----------------------------------------------------------------------------
+/// Title: Routines having to do with type record
+// -----------------------------------------------------------------------------
 
 #include "lc.h"
 #include <stdio.h>
@@ -444,3 +452,6 @@ struct list* newTypelist
 
     return newList((char*) s, old);
 }
+
+
+// -----------------------------------------------------------------------------

@@ -1,13 +1,26 @@
-/*
-  structures used in the lc leda compiler
-*/
+/// Copyright 1993-2015 Timothy A. Budd
+// -----------------------------------------------------------------------------
+//  This file is part of
+/// ---     Leda: Multiparadigm Programming Language
+// -----------------------------------------------------------------------------
+//
+//  Leda is free software: you can redistribute it and/or modify it under the
+//  terms of the MIT license, see file "COPYING" included in this distribution.
+//
+// -----------------------------------------------------------------------------
+/// Title: Structures used in the lc leda compiler
+// -----------------------------------------------------------------------------
 
+#ifndef lc_h
+#define lc_h
 
-/*
-  list is a polymorphic list structure.
-  casts are used to convert pointers of various types to
-  pointers to char
-*/
+// -----------------------------------------------------------------------------
+///  List
+// -----------------------------------------------------------------------------
+
+//- List is a polymorphic list structure.
+//  casts are used to convert pointers of various types to
+//  pointers to char
 
 struct list
 {
@@ -16,11 +29,14 @@ struct list
 };
 
 struct list* newList(char*, struct list*);
-
 struct list* reverse(struct list*);
 
+
+// -----------------------------------------------------------------------------
 ///  Symbol Tables
-// are represented just as lists of symbol records
+// -----------------------------------------------------------------------------
+
+//- Symbol Tablesare represented just as lists of symbol records
 
 enum forms
 {
@@ -146,7 +162,10 @@ struct symbolTableRecord* addFunctionSymbol
 
 struct symbolRecord* argumentNumber(struct typeRecord* t, int n);
 
-///  Types
+
+// -----------------------------------------------------------------------------
+/// Types
+// -----------------------------------------------------------------------------
 
 struct typeRecord* newFunctionType(struct list*, struct typeRecord*);
 
@@ -255,7 +274,10 @@ extern struct typeRecord* relationType;;
 extern struct typeRecord* undefinedType;;
 extern struct typeRecord* ClassType;
 
-///  Arguments
+
+// -----------------------------------------------------------------------------
+/// Arguments
+// -----------------------------------------------------------------------------
 
 struct argumentRecord
 {
@@ -280,8 +302,9 @@ struct list* buildArgumentList
 );
 
 
-// =============================================
-
+// -----------------------------------------------------------------------------
+/// Function declarations
+// -----------------------------------------------------------------------------
 
 struct symbolTableRecord* initialCreation();
 
@@ -319,3 +342,8 @@ void fillInParent
 int typeConformable(struct typeRecord* a, struct typeRecord* b);
 
 int length(struct list* p);
+
+
+// -----------------------------------------------------------------------------
+#endif // lc_h
+// -----------------------------------------------------------------------------

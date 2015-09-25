@@ -1,6 +1,22 @@
-/*
-  data fields used by the Leda interpreter
-*/
+/// Copyright 1993-2015 Timothy A. Budd
+// -----------------------------------------------------------------------------
+//  This file is part of
+/// ---     Leda: Multiparadigm Programming Language
+// -----------------------------------------------------------------------------
+//
+//  Leda is free software: you can redistribute it and/or modify it under the
+//  terms of the MIT license, see file "COPYING" included in this distribution.
+//
+// -----------------------------------------------------------------------------
+/// Title: Data fields used by the Leda interpreter
+// -----------------------------------------------------------------------------
+
+#ifndef interp_h
+#define interp_h
+
+// -----------------------------------------------------------------------------
+///  Types
+// -----------------------------------------------------------------------------
 
 extern struct typeRecord* booleanType;
 extern struct typeRecord* integerType;
@@ -8,7 +24,10 @@ extern struct typeRecord* stringType;
 extern struct typeRecord* trueType;
 extern struct typeRecord* falseType;
 
+
+// -----------------------------------------------------------------------------
 ///  Statements
+// -----------------------------------------------------------------------------
 
 enum statements
 {
@@ -98,7 +117,9 @@ struct statementRecord* genBody
 );
 
 
+// -----------------------------------------------------------------------------
 ///  Expressions
+// -----------------------------------------------------------------------------
 
 enum instructions
 {
@@ -197,7 +218,9 @@ struct expressionRecord* newExpression(enum instructions);
 extern char* specialFunctionNames[];
 
 
+// -----------------------------------------------------------------------------
 ///  Code generation
+// -----------------------------------------------------------------------------
 
 struct statementRecord* genExpressionStatement(struct expressionRecord* e);
 
@@ -302,3 +325,8 @@ struct expressionRecord* genPatternMatch
 void buildClassTable(struct symbolRecord*);
 
 void beginInterpreter(struct symbolTableRecord*, struct statementRecord*);
+
+
+// -----------------------------------------------------------------------------
+#endif // interp_h
+// -----------------------------------------------------------------------------

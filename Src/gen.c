@@ -1,6 +1,15 @@
-/*
-  code generation routines for the leda interpreter
-*/
+/// Copyright 1993-2015 Timothy A. Budd
+// -----------------------------------------------------------------------------
+//  This file is part of
+/// ---     Leda: Multiparadigm Programming Language
+// -----------------------------------------------------------------------------
+//
+//  Leda is free software: you can redistribute it and/or modify it under the
+//  terms of the MIT license, see file "COPYING" included in this distribution.
+//
+// -----------------------------------------------------------------------------
+/// Title: Code generation routines for the leda interpreter
+// -----------------------------------------------------------------------------
 
 #include "lc.h"
 #include "interp.h"
@@ -271,7 +280,9 @@ struct statementRecord* genBody
 }
 
 
+// -----------------------------------------------------------------------------
 /// Expressions
+// -----------------------------------------------------------------------------
 
 static struct expressionRecord* getCC = 0;
 
@@ -1511,3 +1522,6 @@ struct expressionRecord* genPatternMatch
 
     return e;
 }
+
+
+// -----------------------------------------------------------------------------

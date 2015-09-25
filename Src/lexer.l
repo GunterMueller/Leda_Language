@@ -1,8 +1,19 @@
 %{
-/*
-    lexical analyzer for Leda revision August 26, 1993
-    Updated for flex: 23/8/2015
-*/
+/// Copyright 1993-2015 Timothy A. Budd
+// -----------------------------------------------------------------------------
+//  This file is part of
+/// ---     Leda: Multiparadigm Programming Language
+// -----------------------------------------------------------------------------
+//
+//  Leda is free software: you can redistribute it and/or modify it under the
+//  terms of the MIT license, see file "COPYING" included in this distribution.
+//
+// -----------------------------------------------------------------------------
+/// Title: lexical analyzer for Leda
+///  Description:
+//    Revision August 26, 1993
+//    Updated for flex: 23/8/2015
+// -----------------------------------------------------------------------------
 
 int     linenumber = 1;
 char*   fileName = "no file";

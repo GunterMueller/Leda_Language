@@ -1,20 +1,39 @@
-/*
-  Leda memory management
-*/
+/// Copyright 1993-2015 Timothy A. Budd
+// -----------------------------------------------------------------------------
+//  This file is part of
+/// ---     Leda: Multiparadigm Programming Language
+// -----------------------------------------------------------------------------
+//
+//  Leda is free software: you can redistribute it and/or modify it under the
+//  terms of the MIT license, see file "COPYING" included in this distribution.
+//
+// -----------------------------------------------------------------------------
+/// Title: Memory management for the Leda system
+// -----------------------------------------------------------------------------
 
 #include <stdlib.h>
 #include <stdio.h>
 #include "memory.h"
 
-extern int displayOperators;    // true if we are debugging
+// -----------------------------------------------------------------------------
+///  Debugging
+// -----------------------------------------------------------------------------
 
-///  static memory space -- never recovered
+extern int displayOperators;    // Set true to debug
+
+
+// -----------------------------------------------------------------------------
+///  Static memory space -- never recovered
+// -----------------------------------------------------------------------------
+
 static struct ledaValue* staticBase;
 static struct ledaValue* staticTop;
 static struct ledaValue* staticPointer;
 
 
-///  dynamic (managed) memory space
+// -----------------------------------------------------------------------------
+///  Dynamic (managed) memory space
+// -----------------------------------------------------------------------------
 
 static struct ledaValue* spaceOne;
 static struct ledaValue* spaceTwo;
@@ -34,13 +53,22 @@ void dbaddr(int addr, int offset)
     printf("DB offset %d in %p is %p\n", offset, t, t->data[offset]);
 }
 
+
+// -----------------------------------------------------------------------------
 ///  Roots for memory access
+// -----------------------------------------------------------------------------
+
 struct ledaValue* rootStack[ROOTSTACKLIMIT];
 int rootTop = 0;
 struct ledaValue* globalContext;
 struct ledaValue* currentContext;
 
-///  gcinit -- initialize the memory management system
+
+// -----------------------------------------------------------------------------
+///  gcinit
+// -----------------------------------------------------------------------------
+//- Initialize the memory management system
+
 void gcinit(int staticsz, int dynamicsz)
 {
     // Should do something better than this, but  ...
@@ -83,10 +111,15 @@ void gcinit(int staticsz, int dynamicsz)
     inSpaceOne = 1;
 }
 
-///  gc_move -- the heart of the garbage collection algorithm
-// It takes as argument a pointer to a value in the old space,
-// and moves it, and everything it points to, into the new space
-// The returned value is the address in the new space.
+
+// -----------------------------------------------------------------------------
+///  gc_move
+// -----------------------------------------------------------------------------
+//- The heart of the garbage collection algorithm.
+//  It takes as argument a pointer to a value in the old space,
+//  and moves it, and everything it points to, into the new space
+//  The returned value is the address in the new space.
+
 static struct ledaValue* gc_move(struct ledaValue* ptr)
 {
     register struct ledaValue* old_address = ptr;
@@ -206,7 +239,11 @@ static struct ledaValue* gc_move(struct ledaValue* ptr)
 }
 
 
-///  gcollect -- garbage collection entry point
+// -----------------------------------------------------------------------------
+///  gcollect
+// -----------------------------------------------------------------------------
+//- Garbage collection entry point
+
 struct ledaValue* gcollect(int sz)
 {
     if (displayOperators)
@@ -262,7 +299,11 @@ struct ledaValue* gcollect(int sz)
 }
 
 
-///  staticAllocate -- allocates values not be subject to garbage collection
+// -----------------------------------------------------------------------------
+///  staticAllocate
+// -----------------------------------------------------------------------------
+//- Allocates values not be subject to garbage collection
+
 struct ledaValue* staticAllocate(int sz)
 {
     staticPointer -= sz + 2;
@@ -276,7 +317,12 @@ struct ledaValue* staticAllocate(int sz)
 }
 
 
-// If definition is not in-lined, here is what it should be
+// -----------------------------------------------------------------------------
+///  gcalloc
+// -----------------------------------------------------------------------------
+//- Allocates values not be subject to garbage collection
+
+//- If definition is not in-lined, here is what it should be
 # ifndef gcalloc
 struct ledaValue* gcalloc(int sz)
 {
@@ -289,3 +335,6 @@ struct ledaValue* gcalloc(int sz)
     return memoryPointer;
 }
 # endif
+
+
+// -----------------------------------------------------------------------------

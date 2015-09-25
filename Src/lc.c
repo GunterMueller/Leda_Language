@@ -1,6 +1,15 @@
-/*
-  support routines for lc compiler
-*/
+/// Copyright 1993-2015 Timothy A. Budd
+// -----------------------------------------------------------------------------
+//  This file is part of
+/// ---     Leda: Multiparadigm Programming Language
+// -----------------------------------------------------------------------------
+//
+//  Leda is free software: you can redistribute it and/or modify it under the
+//  terms of the MIT license, see file "COPYING" included in this distribution.
+//
+// -----------------------------------------------------------------------------
+/// Title: Support routines for lc compiler
+// -----------------------------------------------------------------------------
 
 #include "lc.h"
 #include "interp.h"
@@ -21,7 +30,9 @@ struct typeRecord* ClassType;
 
 extern int linenumber;
 
-//---------------------lists ------------------
+// -----------------------------------------------------------------------------
+///  Lists
+// -----------------------------------------------------------------------------
 
 struct list* newList(char* v, struct list* ol)
 {
@@ -62,7 +73,9 @@ struct list* reverse(struct list* a)
 }
 
 
+// -----------------------------------------------------------------------------
 ///  Symbol tables
+// -----------------------------------------------------------------------------
 
 struct symbolTableRecord* newSymbolTable
 (
@@ -166,7 +179,9 @@ void addNewSymbol(struct symbolTableRecord* syms, struct symbolRecord* s)
 }
 
 
+// -----------------------------------------------------------------------------
 ///  Symbol records themselves
+// -----------------------------------------------------------------------------
 
 struct symbolRecord* newSymbolRecord(char* n, enum symbolTypes st)
 {
@@ -239,7 +254,9 @@ void addTypeDeclaration
     addNewSymbol(syms, s);
 }
 
+// -----------------------------------------------------------------------------
 ///  Type Record Manipulation
+// -----------------------------------------------------------------------------
 
 struct argumentRecord* newArgument
 (
@@ -524,7 +541,9 @@ void addFunctionArguments
 }
 
 
+// -----------------------------------------------------------------------------
 ///  Initial creation
+// -----------------------------------------------------------------------------
 
 struct typeRecord* makeInitialClass
 (
@@ -592,3 +611,6 @@ struct symbolTableRecord* initialCreation()
 
     return gs;
 }
+
+
+// -----------------------------------------------------------------------------

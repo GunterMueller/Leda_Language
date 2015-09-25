@@ -1,5 +1,19 @@
-# regression testing after changes
-# missing, chap6c which seg-faults
+### Copyright 1993-2015 Timothy A. Budd
+###-----------------------------------------------------------------------------
+##  This file is part of
+### ---     Leda: Multiparadigm Programming Language
+###-----------------------------------------------------------------------------
+##
+##  Leda is free software: you can redistribute it and/or modify it under the
+##  terms of the MIT license, see file "COPYING" included in this distribution.
+##
+###-----------------------------------------------------------------------------
+### Title: Makefile
+###  Maintainer: Henry G. Weller
+###   make
+###    Regression tests for 'lc' for the default target.
+###    Missing, chap6c which seg-faults
+###-----------------------------------------------------------------------------
 
 LC = ../Src/lc
 
@@ -44,3 +58,5 @@ regression: $(LC)
 	@$(LC) -m 500000 chap20d.led >> log
 	@$(LC) chap21.led >> log
 	@diff ref log
+
+###-----------------------------------------------------------------------------
