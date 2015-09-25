@@ -1,9 +1,5 @@
 #                            -*- mode: org; -*-
-#
 #+TITLE: Leda: Multiparadigm Programming Language
-#+OPTIONS: author:nil email:nil ^:{}
-#+LaTeX_HEADER: \usepackage[parfill]{parskip}
-#+STARTUP: hidestars odd
 
 * [[http://henry.github.com/Leda/COPYING][Copyright]]
   + Copyright (C) 1993-2015 Timothy A. Budd
