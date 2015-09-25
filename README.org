@@ -1,0 +1,23 @@
+#                            -*- mode: org; -*-
+#
+#+TITLE: *Leda: Multiparadigm Programming Language*
+#+AUTHOR: nil
+#+OPTIONS: author:nil email:nil ^:{}
+#+LaTeX_HEADER: \usepackage[parfill]{parskip}
+#+STARTUP: hidestars odd
+
+* [[http://henry.github.com/Leda/COPYING][Copyright]]
+  + Copyright (C) 1993-2015 Timothy A. Budd
+
+* Original Sources
+  + [[http://web.engr.oregonstate.edu/~budd/Books/leda/info/ledainterp.tar][Leda]]
+
+* Documentation
+  + [[http://henry.github.com/Leda/Doc/refmanual.pdf][Reference Manual]]
+
+* Build and Test
+  The default build setup is to compile with =gcc= but =lc= has also been
+  tested with =clang= and any other standard C compiler should be suitable.
+  The particular compiler can be configured by editing =Src/Makefile=.
+  + To build the Leda interpreter and manual: =make=
+  + To run all the tests: =make test=
