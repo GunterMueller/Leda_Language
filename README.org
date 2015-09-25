@@ -1,6 +1,6 @@
 #                            -*- mode: org; -*-
 #
-#+TITLE: *Leda: \\ Multiparadigm Programming Language*
+#+TITLE: Leda: Multiparadigm Programming Language
 #+AUTHOR: nil
 #+OPTIONS: author:nil email:nil ^:{}
 #+LaTeX_HEADER: \usepackage[parfill]{parskip}
