@@ -9,6 +9,28 @@
 * [[http://henry.github.com/Leda/COPYING][Copyright]]
   + Copyright (C) 1993-2015 Timothy A. Budd
 
+* Overview of Leda
+  The Leda programming is a multi-paradigm language which spans the boundaries
+  of the well known programming language models: imperative, object-oriented,
+  functional and logic.
+
+  Leda was developed in the early 1990's by Timothy A. Budd an associate
+  professor at Oregon State University Corvallis.  The attempt to define a
+  language that would support multiple programming paradigms was inspired by
+  Budd's excitement about OOP and other innovations occuring in the development
+  of programming languages at the time. The initial attempts at creating the new
+  language started with the development of compilers by students under Budd's
+  direction as well as other researchers at the University of Nice, in
+  France.  In 1993 Budd took a sabbatical leave from his University post at
+  Oregon State to teach in Europe and complete research on the new programming
+  language.  During this year, he penned the definitive text on the Leda:
+  [[http://web.engr.oregonstate.edu/~budd/Books/leda/index.html]["Multiparadigm
+  Programming in Leda"]].
+
+  The Leda syntax is influenced by the ALGOL-60 programming language and similar
+  to many of the other languages that are direct decedents of ALGOL-60 including
+  Pascal, SIMULA, Modula, Oberon and Ada.
+
 * Original Sources
   + [[http://web.engr.oregonstate.edu/~budd/Books/leda/info/ledainterp.tar][Leda
     Interpreter]]
