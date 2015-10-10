@@ -1,4 +1,3 @@
-### Copyright 1993-2015 Timothy A. Budd
 ###-----------------------------------------------------------------------------
 ##  This file is part of
 ### ---     Leda: Multiparadigm Programming Language
@@ -13,28 +12,36 @@
 ###   make
 ###    Build 'lc' for the default target
 ###-----------------------------------------------------------------------------
+P_DIR=..
+DIR=/.
+include $(P_DIR)/Make/Makefile.config
 
-CFLAGS = -std=c99 -D_GNU_SOURCE -Wall -g -O -m32
-CC = gcc-4.8
+###-----------------------------------------------------------------------------
+### Set the default target
+###-----------------------------------------------------------------------------
+TARGET = debug
 
-lc: y.tab.o lc.o gen.o interp.o types.o memory.o
-	$(CC) $(CFLAGS) -o lc -p y.tab.o lc.o gen.o interp.o types.o memory.o
+###-----------------------------------------------------------------------------
+### Source files
+###-----------------------------------------------------------------------------
+SOURCES =	\
+    gram.y      \
+    lc.c        \
+    gen.c       \
+    interp.c	\
+    types.c	\
+    memory.c
 
-y.tab.o: memory.h lc.h interp.h y.tab.c lex.yy.c
-lc.o: lc.h interp.h lc.c
-interp.o: lc.h interp.h memory.h interp.c
-memory.o: memory.h memory.c
-gen.o: lc.h interp.h gen.c
-types.o: lc.h types.c
+###-----------------------------------------------------------------------------
+### Name of executable
+###-----------------------------------------------------------------------------
+PRODUCT=lc
 
-y.tab.c: gram.y
-	yacc gram.y
+###-----------------------------------------------------------------------------
+### Include the build rules
+###-----------------------------------------------------------------------------
+include $(P_DIR)/Make/Makefile.build
 
-lex.yy.c: lexer.l
-	flex lexer.l
-
-.PHONY: clean
-clean:
-	@rm -f lex.yy.c y.tab.c *.o lc
+gram.y: $(OBJDIR)/lexer.l.c
 
 ###-----------------------------------------------------------------------------

@@ -1,0 +1,44 @@
+###-----------------------------------------------------------------------------
+### Title: Common rules for controlling the build process
+###  Maintainer: Henry G. Weller
+###-----------------------------------------------------------------------------
+
+H=@
+
+top-%:
+	cd ./$(P_DIR); $(MAKE) $*
+
+v-%:
+	$(MAKE) $* V= R= H=
+timing-%:
+	$(MAKE) $* V=time R= H=
+s-%:
+	$(MAKE) -s --no-print-directory $* 2> build.err
+l-%:
+	$(MAKE) v-$* 2>&1 | tee buildlog
+
+###---------------------------------------------------------------------
+### Functions
+###---------------------------------------------------------------------
+makeAll = +$(foreach dir, $(1), $(MAKE) -C $(dir) $(2);)
+
+###---------------------------------------------------------------------
+### Org-mode documentation building
+###---------------------------------------------------------------------
+.SUFFIXES: .org .html
+.org.html:
+	$R eemacs $< -q -l ~/.emacs.d/init-eemacs.el --batch \
+           --eval "(org-html-export-to-html)"
+
+###-----------------------------------------------------------------------------
+### Miscellaneous commands
+###-----------------------------------------------------------------------------
+.PHONY: dirclean
+dirclean:
+	$H rm -f $(GARBAGE) $(TOCLEAN)
+
+.PHONY: clean distclean
+clean distclean: dirclean
+	$H rm -rf $(P_DIR)/platforms
+
+###-----------------------------------------------------------------------------

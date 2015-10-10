@@ -8,9 +8,6 @@
 # Ignore platforms directories
 platforms
 
-lex.yy.c
-y.tab.c
-
 # Ignore all object files
 *.o
 
@@ -24,15 +21,11 @@ y.tab.c
 # Ignore all run logs
 *.log
 *.out
+log
 
 # Ignore corefiles
 core
 vgcore*
-
-# Ignore executable
-lc
-
-log
 
 updateDocs
 

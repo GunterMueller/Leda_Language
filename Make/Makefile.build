@@ -1,0 +1,125 @@
+###-----------------------------------------------------------------------------
+### Title: Common build rules
+###  Maintainer: Henry G. Weller
+###-----------------------------------------------------------------------------
+
+###-----------------------------------------------------------------------------
+### Default target
+###-----------------------------------------------------------------------------
+all: hello build goodbye
+
+depend: $(OBJDIR)/Makefile.depend
+	@echo Dependencies for $(TARGET) done
+hello:
+	@echo ----------- Making $(TARGET) in $$(pwd) ------------
+goodbye:
+	@echo ---------- Done with $(TARGET) in $$(pwd) ----------
+
+build:									\
+        depend                                                          \
+	prebuild							\
+	$(OBJDIR) $(OBJECTS) $(OBJLIBRARY) $(OBJDRIVER) $(OBJEXE)	\
+	postbuild
+
+# "Hooks" for pre and post build steps
+prebuild:
+postbuild:
+
+###-----------------------------------------------------------------------------
+### General rules
+###-----------------------------------------------------------------------------
+include $(P_DIR)/Make/Makefile.rules
+
+###-----------------------------------------------------------------------------
+### Message controls
+###-----------------------------------------------------------------------------
+V=@if [ ! -z "$<" ]; then echo Compiling $<; fi;
+R=@if [ ! -z "$@" ]; then echo Building $@; fi;
+
+###-----------------------------------------------------------------------------
+### Product generation rules
+###-----------------------------------------------------------------------------
+$(OBJDIR):
+	$R mkdir -p $(OBJDIR)
+
+$(OBJEXE): $(OBJECTS) $(OBJLIBDEP)
+	$R $(LD) $(OBJECTS) $(LDFLAGS) $(LDFLAGS_$(OBJEXE))		\
+		 -L$(OBJROOT) $(OBJLIBRARIES) -o $(OBJEXE)
+
+$(OBJLIBRARY) lib: $(OBJECTS)
+	$R $(AR) -r $@ $(OBJECTS); $(RANLIB) $@
+
+$(OBJDRIVER) dvr: $(OBJECTS) $(OBJLIBDEP)
+	$R $(DRIVER_LD) $@ $(LDFLAGS) $(LDFLAGS_$*)		\
+		 $(OBJECTS) -L$(OBJROOT) $(OBJLIBRARIES)
+
+
+###-----------------------------------------------------------------------------
+### Inference rules
+###-----------------------------------------------------------------------------
+$(OBJDIR)/%.c.o: %.c
+	$V $(CC) $(CFLAGS) $(CPPFLAGS_$*) $(CFLAGS_$*) -o $@ -c $<
+
+$(OBJDIR)/%.C.o: %.C
+	$V $(CXX) $(CXXFLAGS) $(CPPFLAGS_$*) $(CXXFLAGS_$*) -o $@ -c $<
+
+$(OBJDIR)/%.cpp.o: %.cpp
+	$V $(CXX) $(CXXFLAGS) $(CPPFLAGS_$*) $(CXXFLAGS_$*) -o $@ -c $<
+
+$(OBJDIR)/%.l.c: %.l
+	$V mkdir -p $(OBJDIR)
+	$V flex -o $@ $<
+
+$(OBJDIR)/%.y.o: %.y
+	$V yacc $<
+	$V mv y.tab.c $(OBJDIR)/$*.c
+	$V $(CC) $(CFLAGS) $(CPPFLAGS_$*) $(CFLAGS_$*) -o $@ -c $(OBJDIR)/$*.c
+
+###-----------------------------------------------------------------------------
+### Dependencies generation
+###-----------------------------------------------------------------------------
+CAT_DEPEND=sed								\
+	-e 's@$(@:.mkdepend=).o:@$(OBJDIR)/$(@:.mkdepend=).o:@g' 	\
+	-e 's@$*.o:@$(OBJDIR)/$(@:.mkdepend=).o:@g'	 		\
+	< _tmp.depend >> $(OBJDIR)/_Makefile.depend &&			\
+	rm -f _tmp.depend
+ifdef TARGET
+$(OBJDIR)/Makefile.depend: $(SOURCES)
+	$V echo Generating dependencies in $@
+	$V mkdir -p $(OBJDIR)
+	$V echo > $(OBJDIR)/Makefile.depend
+	$V $(MAKE) mkdepend
+else
+$(OBJDIR)/Makefile.depend:
+endif
+
+mkdepend: predepend $(SOURCES:%=%.mkdepend)
+	$V touch $(OBJDIR)/_Makefile.depend
+	$V mv $(OBJDIR)/_Makefile.depend $(OBJDIR)/Makefile.depend
+predepend:
+	$V echo > $(OBJDIR)/_Makefile.depend
+%.c.mkdepend:
+	$V $(CC_DEPEND) $*.c && $(CAT_DEPEND)
+%.C.mkdepend:
+	$V $(CXX_DEPEND) $*.C && $(CAT_DEPEND)
+%.cpp.mkdepend:
+	$V $(CXX_DEPEND) $*.cpp && $(CAT_DEPEND)
+%.S.mkdepend:
+	$V $(AS_DEPEND) $*.S && $(CAT_DEPEND)
+%.s.mkdepend:
+	$V $(AS_DEPEND) $*.s && $(CAT_DEPEND)
+%.l.mkdepend:
+	$V $(CC_DEPEND) $*.l && $(CAT_DEPEND)
+%.y.mkdepend:
+	$V $(CC_DEPEND) $*.y && $(CAT_DEPEND)
+
+###-----------------------------------------------------------------------------
+### Include dependencies from current directory
+###-----------------------------------------------------------------------------
+ifdef SOURCES
+ifeq ($(findstring clean,$(MAKECMDGOALS)),)
+-include $(OBJDIR)/Makefile.depend
+endif
+endif
+
+###-----------------------------------------------------------------------------

@@ -655,7 +655,7 @@ functionExpressionHead:
     ;
 
 %%
-#include "lex.yy.c"
+#include "lexer.l.c"
 
 void yyserror(char* pattern, char* name)
 {
