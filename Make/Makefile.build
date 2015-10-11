@@ -7,14 +7,13 @@
 ###-----------------------------------------------------------------------------
 ### Default target
 ###-----------------------------------------------------------------------------
+
+.PHONY: all begin build depend end
+
 all: begin build end
 
-depend: $(OBJDIR)/Makefile.depend
-	@echo Dependencies for $(TARGET) done
 begin:
 	@echo ---------- Building $(TARGET) in $$(pwd) -----------
-end:
-	@echo ---------- Completed $(TARGET) in $$(pwd) ----------
 
 build:									\
         depend                                                          \
@@ -22,7 +21,15 @@ build:									\
 	$(OBJDIR) $(OBJECTS) $(OBJLIBRARY) $(OBJDRIVER) $(OBJEXE)	\
 	postbuild
 
+depend: $(OBJDIR)/Makefile.depend
+	@echo Dependencies for $(TARGET) done
+
+end:
+	@echo ---------- Completed $(TARGET) in $$(pwd) ----------
+
+
 # "Hooks" for pre and post build steps
+.PHONY: prebuild postbuild
 prebuild:
 postbuild:
 
@@ -77,16 +84,18 @@ CAT_DEPEND=sed								\
 	< _tmp.depend >> $(OBJDIR)/_Makefile.depend &&			\
 	rm -f _tmp.depend
 
+
 ifdef TARGET
 $(OBJDIR)/Makefile.depend: $(SOURCES)
 	$M echo Generating dependencies in $@
 	$M mkdir -p $(OBJDIR)
 	$M echo > $(OBJDIR)/Makefile.depend
-	$M $(MAKE) H=$M mkdepend
+	$M $(MAKE) M=$M mkdepend
 else
 $(OBJDIR)/Makefile.depend:
 endif
 
+.PHONY: mkdepend predepend
 mkdepend: predepend $(SOURCES:%=%.mkdepend)
 	$M touch $(OBJDIR)/_Makefile.depend
 	$M mv $(OBJDIR)/_Makefile.depend $(OBJDIR)/Makefile.depend
@@ -106,7 +115,7 @@ predepend:
 	$M cp $*.l $*.c
 	$M $(CC_DEPEND) $*.c \
 	    && sed -i -e 's@$*.c@$(OBJDIR)/$*.l.c@' \
-		-e 's@\([^ ]*\.y\.h\)@$(OBJDIR)/\1@' _tmp.depend \
+		-e 's@\([^ /]*\.y\.h\)@$(OBJDIR)/\1@' _tmp.depend \
 	    && $(CAT_DEPEND)
 	$M rm -f $*.c
 

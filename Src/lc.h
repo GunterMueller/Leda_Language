@@ -306,6 +306,14 @@ struct list* buildArgumentList
 /// Function declarations
 // -----------------------------------------------------------------------------
 
+extern char* fileName;
+extern int linenumber;
+extern char *yytext;
+
+int yyerror(char*);
+void yyserror(char*, char*);
+extern void openInputFile(char * name);
+
 struct symbolTableRecord* initialCreation();
 
 struct typeRecord* checkType(struct symbolRecord*);
@@ -314,9 +322,6 @@ struct typeRecord* checkQualifications(struct typeRecord*, struct list*);
 struct expressionRecord* checkExpression(struct symbolRecord*);
 
 char* newString(char*);
-
-int yyerror(char*);
-void yyserror(char*, char*);
 
 void addConstant
 (

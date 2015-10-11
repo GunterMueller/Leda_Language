@@ -660,10 +660,6 @@ functionExpressionHead:
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-extern char* fileName;
-extern int linenumber;
-extern char *yytext;
-extern void openInputFile(char * name);
 
 void yyserror(char* pattern, char* name)
 {
