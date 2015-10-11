@@ -15,6 +15,9 @@
 //    Updated for flex: 23/8/2015
 // -----------------------------------------------------------------------------
 
+#include "lc.h"
+#include "gram.y.h"
+
 int     linenumber = 1;
 char*   fileName = "no file";
 

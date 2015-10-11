@@ -1,3 +1,4 @@
+### -*- mode: makefile -*-
 ###-----------------------------------------------------------------------------
 ### Title: Common build rules
 ###  Maintainer: Henry G. Weller
@@ -6,14 +7,14 @@
 ###-----------------------------------------------------------------------------
 ### Default target
 ###-----------------------------------------------------------------------------
-all: hello build goodbye
+all: begin build end
 
 depend: $(OBJDIR)/Makefile.depend
 	@echo Dependencies for $(TARGET) done
-hello:
-	@echo ----------- Making $(TARGET) in $$(pwd) ------------
-goodbye:
-	@echo ---------- Done with $(TARGET) in $$(pwd) ----------
+begin:
+	@echo ---------- Building $(TARGET) in $$(pwd) -----------
+end:
+	@echo ---------- Completed $(TARGET) in $$(pwd) ----------
 
 build:									\
         depend                                                          \
@@ -31,49 +32,41 @@ postbuild:
 include $(P_DIR)/Make/Makefile.rules
 
 ###-----------------------------------------------------------------------------
-### Message controls
-###-----------------------------------------------------------------------------
-V=@if [ ! -z "$<" ]; then echo Compiling $<; fi;
-R=@if [ ! -z "$@" ]; then echo Building $@; fi;
-
-###-----------------------------------------------------------------------------
 ### Product generation rules
 ###-----------------------------------------------------------------------------
 $(OBJDIR):
-	$R mkdir -p $(OBJDIR)
+	$B mkdir -p $(OBJDIR)
 
 $(OBJEXE): $(OBJECTS) $(OBJLIBDEP)
-	$R $(LD) $(OBJECTS) $(LDFLAGS) $(LDFLAGS_$(OBJEXE))		\
+	$B $(LD) $(OBJECTS) $(LDFLAGS) $(LDFLAGS_$(OBJEXE))		\
 		 -L$(OBJROOT) $(OBJLIBRARIES) -o $(OBJEXE)
 
 $(OBJLIBRARY) lib: $(OBJECTS)
-	$R $(AR) -r $@ $(OBJECTS); $(RANLIB) $@
+	$B $(AR) -r $@ $(OBJECTS); $(RANLIB) $@
 
 $(OBJDRIVER) dvr: $(OBJECTS) $(OBJLIBDEP)
-	$R $(DRIVER_LD) $@ $(LDFLAGS) $(LDFLAGS_$*)		\
+	$B $(DRIVER_LD) $@ $(LDFLAGS) $(LDFLAGS_$*)		\
 		 $(OBJECTS) -L$(OBJROOT) $(OBJLIBRARIES)
-
 
 ###-----------------------------------------------------------------------------
 ### Inference rules
 ###-----------------------------------------------------------------------------
 $(OBJDIR)/%.c.o: %.c
-	$V $(CC) $(CFLAGS) $(CPPFLAGS_$*) $(CFLAGS_$*) -o $@ -c $<
+	$C $(CC) $(CFLAGS) $(CPPFLAGS_$*) $(CFLAGS_$*) -o $@ -c $<
 
 $(OBJDIR)/%.C.o: %.C
-	$V $(CXX) $(CXXFLAGS) $(CPPFLAGS_$*) $(CXXFLAGS_$*) -o $@ -c $<
+	$C $(CXX) $(CXXFLAGS) $(CPPFLAGS_$*) $(CXXFLAGS_$*) -o $@ -c $<
 
 $(OBJDIR)/%.cpp.o: %.cpp
-	$V $(CXX) $(CXXFLAGS) $(CPPFLAGS_$*) $(CXXFLAGS_$*) -o $@ -c $<
+	$C $(CXX) $(CXXFLAGS) $(CPPFLAGS_$*) $(CXXFLAGS_$*) -o $@ -c $<
 
 $(OBJDIR)/%.l.c: %.l
-	$V mkdir -p $(OBJDIR)
-	$V flex -o $@ $<
+	$M mkdir -p $(OBJDIR)
+	$C flex -o $@ $<
 
-$(OBJDIR)/%.y.o: %.y
-	$V yacc $<
-	$V mv y.tab.c $(OBJDIR)/$*.c
-	$V $(CC) $(CFLAGS) $(CPPFLAGS_$*) $(CFLAGS_$*) -o $@ -c $(OBJDIR)/$*.c
+$(OBJDIR)/%.y.c $(OBJDIR)/%.y.h: %.y
+	$M mkdir -p $(OBJDIR)
+	$C bison -d -o $(OBJDIR)/$*.y.c $<
 
 ###-----------------------------------------------------------------------------
 ### Dependencies generation
@@ -83,35 +76,54 @@ CAT_DEPEND=sed								\
 	-e 's@$*.o:@$(OBJDIR)/$(@:.mkdepend=).o:@g'	 		\
 	< _tmp.depend >> $(OBJDIR)/_Makefile.depend &&			\
 	rm -f _tmp.depend
+
 ifdef TARGET
 $(OBJDIR)/Makefile.depend: $(SOURCES)
-	$V echo Generating dependencies in $@
-	$V mkdir -p $(OBJDIR)
-	$V echo > $(OBJDIR)/Makefile.depend
-	$V $(MAKE) mkdepend
+	$M echo Generating dependencies in $@
+	$M mkdir -p $(OBJDIR)
+	$M echo > $(OBJDIR)/Makefile.depend
+	$M $(MAKE) H=$M mkdepend
 else
 $(OBJDIR)/Makefile.depend:
 endif
 
 mkdepend: predepend $(SOURCES:%=%.mkdepend)
-	$V touch $(OBJDIR)/_Makefile.depend
-	$V mv $(OBJDIR)/_Makefile.depend $(OBJDIR)/Makefile.depend
+	$M touch $(OBJDIR)/_Makefile.depend
+	$M mv $(OBJDIR)/_Makefile.depend $(OBJDIR)/Makefile.depend
 predepend:
-	$V echo > $(OBJDIR)/_Makefile.depend
+	$M echo > $(OBJDIR)/_Makefile.depend
 %.c.mkdepend:
-	$V $(CC_DEPEND) $*.c && $(CAT_DEPEND)
+	$M $(CC_DEPEND) $*.c && $(CAT_DEPEND)
 %.C.mkdepend:
-	$V $(CXX_DEPEND) $*.C && $(CAT_DEPEND)
+	$M $(CXX_DEPEND) $*.C && $(CAT_DEPEND)
 %.cpp.mkdepend:
-	$V $(CXX_DEPEND) $*.cpp && $(CAT_DEPEND)
+	$M $(CXX_DEPEND) $*.cpp && $(CAT_DEPEND)
 %.S.mkdepend:
-	$V $(AS_DEPEND) $*.S && $(CAT_DEPEND)
+	$M $(AS_DEPEND) $*.S && $(CAT_DEPEND)
 %.s.mkdepend:
-	$V $(AS_DEPEND) $*.s && $(CAT_DEPEND)
+	$M $(AS_DEPEND) $*.s && $(CAT_DEPEND)
 %.l.mkdepend:
-	$V $(CC_DEPEND) $*.l && $(CAT_DEPEND)
+	$M cp $*.l $*.c
+	$M $(CC_DEPEND) $*.c \
+	    && sed -i -e 's@$*.c@$(OBJDIR)/$*.l.c@' \
+		-e 's@\([^ ]*\.y\.h\)@$(OBJDIR)/\1@' _tmp.depend \
+	    && $(CAT_DEPEND)
+	$M rm -f $*.c
+
 %.y.mkdepend:
-	$V $(CC_DEPEND) $*.y && $(CAT_DEPEND)
+	$M cp $*.y $*.c
+	$M $(CC_DEPEND) $*.c \
+	    && sed -i 's@$*.c@$(OBJDIR)/$*.y.c@' _tmp.depend \
+	    && $(CAT_DEPEND)
+	$M rm -f $*.c
+
+###---------------------------------------------------------------------
+### Org-mode documentation building
+###---------------------------------------------------------------------
+.SUFFIXES: .org .html
+.org.html:
+	$B eemacs $< -q -l ~/.emacs.d/init-eemacs.el --batch \
+            --eval "(org-html-export-to-html)"
 
 ###-----------------------------------------------------------------------------
 ### Include dependencies from current directory

@@ -1,44 +1,70 @@
+### -*- mode: makefile -*-
 ###-----------------------------------------------------------------------------
 ### Title: Common rules for controlling the build process
 ###  Maintainer: Henry G. Weller
 ###-----------------------------------------------------------------------------
 
-H=@
+###-----------------------------------------------------------------------------
+### Message controls
+###-----------------------------------------------------------------------------
+# Can be reset on the command-line
+# e.g. options M= C= B= is equivalent to verbose output
 
-top-%:
-	cd ./$(P_DIR); $(MAKE) $*
+# Supress messages from comands other then compile or build
+M = @
 
-v-%:
-	$(MAKE) $* V= R= H=
-timing-%:
-	$(MAKE) $* V=time R= H=
-s-%:
+# Set compilation message
+C = @if [ ! -z "$<" ]; then echo Compiling $<; fi;
+
+# Set build message
+B = @if [ ! -z "$@" ]; then echo Building $@; fi;
+
+###-----------------------------------------------------------------------------
+### Target build options
+###-----------------------------------------------------------------------------
+
+# Build from the the top-level directory
+%--top:
+	$(MAKE) -C ./$(P_DIR) $*
+
+# Verbose messages
+%-v %--verbose:
+	$(MAKE) $* M= C= B=
+
+# Time the compilations
+%-t %--time:
+	$(MAKE) $* M= C=time B=
+
+# Build silently
+%-s %--silent:
 	$(MAKE) -s --no-print-directory $* 2> build.err
-l-%:
-	$(MAKE) v-$* 2>&1 | tee buildlog
+
+# Redirect output to a log file
+%-l %--log:
+	$(MAKE) v-$* > build.log 2>&1
+
+# Build the optimised target
+%-o %--opt:
+	$(MAKE) $* TARGET=opt
+
+# Build the debug target
+%-d %--debug:
+	$(MAKE) $* TARGET=debug
 
 ###---------------------------------------------------------------------
 ### Functions
 ###---------------------------------------------------------------------
 makeAll = +$(foreach dir, $(1), $(MAKE) -C $(dir) $(2);)
 
-###---------------------------------------------------------------------
-### Org-mode documentation building
-###---------------------------------------------------------------------
-.SUFFIXES: .org .html
-.org.html:
-	$R eemacs $< -q -l ~/.emacs.d/init-eemacs.el --batch \
-           --eval "(org-html-export-to-html)"
-
 ###-----------------------------------------------------------------------------
 ### Miscellaneous commands
 ###-----------------------------------------------------------------------------
 .PHONY: dirclean
 dirclean:
-	$H rm -f $(GARBAGE) $(TOCLEAN)
+	$M rm -f $(GARBAGE) $(TOCLEAN) build.log build.err
 
 .PHONY: clean distclean
 clean distclean: dirclean
-	$H rm -rf $(P_DIR)/platforms
+	$M rm -rf $(P_DIR)/platforms
 
 ###-----------------------------------------------------------------------------
