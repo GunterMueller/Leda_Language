@@ -1,19 +1,11 @@
 ###-----------------------------------------------------------------------------
-##  This file is part of
-### ---     Leda: Multiparadigm Programming Language
-###-----------------------------------------------------------------------------
-##
-##  Leda is free software: you can redistribute it and/or modify it under the
-##  terms of the MIT license, see file "COPYING" included in this distribution.
-##
-###-----------------------------------------------------------------------------
 ### Title: Makefile
 ###  Maintainer: Henry G. Weller
 ###   make
-###    Build 'lc' for the default target (optimized)
+###    Build Leda compiler 'lc' for the default target (optimized)
 ###-----------------------------------------------------------------------------
 P_DIR = ..
-DIR = /.
+DIR = /
 include $(P_DIR)/Make/Makefile.config
 
 ###-----------------------------------------------------------------------------
@@ -42,5 +34,8 @@ PRODUCT = lc
 ### Include the build rules
 ###-----------------------------------------------------------------------------
 include $(P_DIR)/Make/Makefile.build
+
+clean:
+	$M rm -rf $(OBJDIR)
 
 ###-----------------------------------------------------------------------------

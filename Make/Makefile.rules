@@ -59,12 +59,14 @@ makeAll = +$(foreach dir, $(1), $(MAKE) -C $(dir) $(2);)
 ###-----------------------------------------------------------------------------
 ### Miscellaneous commands
 ###-----------------------------------------------------------------------------
-.PHONY: dirclean
+.PHONY: dirclean clean distclean
+
 dirclean:
 	$M rm -f $(GARBAGE) $(TOCLEAN) build.log build.err
 
-.PHONY: clean distclean
-clean distclean: dirclean
+clean: dirclean
+
+distclean: clean
 	$M rm -rf $(P_DIR)/platforms
 
 ###-----------------------------------------------------------------------------

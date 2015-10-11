@@ -1,0 +1,5 @@
+* Leda Tests
+  This directory contains test files for the Leda Interpreter.
+
+  Tests correspond to chapters in the book
+  ``Multiparadigm Programming in Leda''.

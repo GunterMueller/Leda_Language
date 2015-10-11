@@ -1,21 +1,27 @@
-### Copyright 1993-2015 Timothy A. Budd
-###-----------------------------------------------------------------------------
-##  This file is part of
-### ---     Leda: Multiparadigm Programming Language
-###-----------------------------------------------------------------------------
-##
-##  Leda is free software: you can redistribute it and/or modify it under the
-##  terms of the MIT license, see file "COPYING" included in this distribution.
-##
 ###-----------------------------------------------------------------------------
 ### Title: Makefile
 ###  Maintainer: Henry G. Weller
-###   make
-###    Build 'refmanual.pdf'
+###   make all
+###    Build 'refmanual.pdf and ReleaseNotes.html'
+###-----------------------------------------------------------------------------
+P_DIR = ..
+DIR = /
+include $(P_DIR)/Make/Makefile.config
+
 ###-----------------------------------------------------------------------------
 
-refmanual.pdf: cprog.sty grammar.tex  refmanual.tex  std.tex  trouble.tex
-	@pdflatex refmanual.tex
-	@pdflatex refmanual.tex
+.PHONY: all
+all: refmanual.pdf ReleaseNotes.html
+
+refmanual.pdf: refmanual.tex grammar.tex std.tex  trouble.tex cprog.sty
+	$M pdflatex refmanual.tex
+	$M pdflatex refmanual.tex
+
+ReleaseNotes.html: ReleaseNotes.org
+
+###-----------------------------------------------------------------------------
+### Include the build rules
+###-----------------------------------------------------------------------------
+include $(P_DIR)/Make/Makefile.build
 
 ###-----------------------------------------------------------------------------

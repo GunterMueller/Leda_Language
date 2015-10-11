@@ -1,12 +1,3 @@
-### Copyright 1993-2015 Timothy A. Budd
-###-----------------------------------------------------------------------------
-##  This file is part of
-### ---     Leda: Multiparadigm Programming Language
-###-----------------------------------------------------------------------------
-##
-##  Leda is free software: you can redistribute it and/or modify it under the
-##  terms of the MIT license, see file "COPYING" included in this distribution.
-##
 ###-----------------------------------------------------------------------------
 ### Title: Makefile
 ###  Maintainer: Henry G. Weller
@@ -14,8 +5,17 @@
 ###    Regression tests for 'lc' for the default target.
 ###    Missing, chap6c which seg-faults
 ###-----------------------------------------------------------------------------
+P_DIR = ..
+DIR = /
+include $(P_DIR)/Make/Makefile.config
 
-LC = ../Src/lc
+###-----------------------------------------------------------------------------
+### Set the default target
+###-----------------------------------------------------------------------------
+TARGET = opt
+
+###-----------------------------------------------------------------------------
+LC = $(OBJDIR)/lc
 
 regression: $(LC)
 	@$(LC) chap2a.led > log
@@ -58,5 +58,12 @@ regression: $(LC)
 	@$(LC) -m 500000 chap20d.led >> log
 	@$(LC) chap21.led >> log
 	@diff ref log
+
+TOCLEAN = log
+
+###-----------------------------------------------------------------------------
+### Include the build rules
+###-----------------------------------------------------------------------------
+include $(P_DIR)/Make/Makefile.build
 
 ###-----------------------------------------------------------------------------
