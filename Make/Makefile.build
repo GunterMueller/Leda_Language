@@ -137,9 +137,15 @@ predepend:
 ###-----------------------------------------------------------------------------
 ### Include dependencies from current directory
 ###-----------------------------------------------------------------------------
+# Build and include the dependencies only if SOURCES is defined,
+# no target options are specified (e.g. all-v)
+# a 'clean' target is not specified
+
 ifdef SOURCES
+ifeq ($(findstring -,$(MAKECMDGOALS)),)
 ifeq ($(findstring clean,$(MAKECMDGOALS)),)
 -include $(OBJDIR)/Makefile.depend
+endif
 endif
 endif
 
